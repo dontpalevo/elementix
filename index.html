@@ -47,10 +47,26 @@ x='50%'  y='58%'  dominant-baseline='middle'  text-anchor='middle'  font-size='2
     .lab{display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding:12px}
 
     /* FIX: закрепляем тулбар, чтобы не прыгал */
-    .toolbar{
-      display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;
-      position: sticky; top: 60px; background: var(--panel); padding: 8px 0; z-index: 5; border-radius:12px;
-    }
+    .lab{
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* закрепляем тулбар внутри панели */
+.toolbar{
+  position: sticky;
+  top: 52px;
+  background: var(--panel);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-radius: 12px;
+  z-index: 10;
+}
 
     .btn{background:#243244;border:1px solid #304059;color:#cfe1ff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
     .btn.primary{background:var(--accent);border:none;color:#06101c;font-weight:900}
