@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Elementix — алхимия</title>
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0f14">
+<style>
+:root{--bg:#0b0f14;--panel:#10161d;--panel2:#0b1218;--line:#1f2a39;--ink:#e7ecf4;--muted:#9fb0bf;--accent:#6fb1ff}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+body{background:radial-gradient(800px 480px at 80% -10%, #172332, #0b0f14)}
+.app{min-height:100%;display:flex;flex-direction:column}
+.header{position:sticky;top:0;z-index:70;display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;padding-top:calc(env(safe-area-inset-top,0px));border-bottom:1px solid var(--line);background:rgba(11,15,20,.88);backdrop-filter:blur(8px)}
+.title{font-weight:800}
+.spacer{flex:1}
+.stars{display:flex;align-items:center;gap:6px;background:#121b28;border:1px solid #253247;color:#ffd166;border-radius:999px;padding:6px 10px;font-weight:800}
+.main{display:flex;flex-direction:column;gap:10px;padding:8px 12px calc(120px + env(safe-area-inset-bottom,0px))}
+.crumbs{position:sticky;top:48px;z-index:65;display:flex;gap:10px;align-items:center;overflow-x:auto;padding:8px 6px;background:rgba(11,15,20,.85);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px}
+.token{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:linear-gradient(180deg,#0f1620,#0b1218);border:1px solid #203043;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.token .emo{font-size:22px}
+/* HORIZONTAL bowls */
+.bowls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:359px){.bowls{grid-template-columns:1fr}}
+.drop{position:relative;background:var(--panel2);border:1px dashed #2a384b;border-radius:16px;min-height:140px;display:grid;place-items:center;overflow:hidden}
+.drop .hint{position:absolute;top:8px;left:12px;color:var(--muted);font-size:12px}
+.selection{display:flex;gap:12px;align-items:center;animation:arrive .35s ease-out}
+.selection .emoji{font-size:54px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.selection .name{font-size:14px;color:#cfe1ff}
+@keyframes arrive{0%{transform:translateY(10px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+.tools{position:sticky;top:calc(48px + 56px); z-index:60;background:rgba(11,15,20,.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;gap:8px;align-items:center}
+.tools input{flex:1;background:#0b1218;border:1px solid var(--line);border-radius:10px;color:#cfe1ff;padding:10px}
+.tools .count{font-size:12px;color:#9fb0bf}
+.grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(104px,1fr));gap:10px}
+.card{background:linear-gradient(180deg,#101821,#0b1218);border:1px solid #1f2a39;border-radius:14px;padding:10px;display:grid;gap:6px;position:relative;cursor:grab}
+.emoji{font-size:30px} .name{font-size:12px;color:#cfe1ff}
+.tag{position:absolute;top:8px;right:8px;font-size:10px;background:#121b28;border:1px solid #253247;border-radius:999px;padding:2px 6px;color:#9fb0bf}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:80;background:linear-gradient(180deg, rgba(11,15,20,0), rgba(11,15,20,.95));padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.dock .inner{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;max-width:900px;width:100%}
+.btn{background:#1b2633;border:1px solid #253247;color:#cfe1ff;border-radius:16px;padding:14px 14px;font-weight:700;cursor:pointer}
+.btn.primary{background:#6fb1ff;border:none;color:#07101c;font-weight:900;padding:16px 24px;border-radius:20px;font-size:16px}
+#hint{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:132px;padding:12px 14px}
+.hline1{font-weight:900}.hline2{font-size:12px;opacity:.9}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#0b1218;border:1px solid #1f2a39;color:#cfe1ff;padding:10px 14px;border-radius:12px;opacity:0;animation:pop .9s ease-out forwards;z-index:90}
+@keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(8px)}20%{opacity:1}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <div class="title">Elementix — алхимия</div>
+    <div class="spacer"></div>
+    <div class="stars">⭐ <span id="stars">20</span></div>
+    <button id="openJournal" class="btn" style="margin-left:8px">Журнал</button>
+  </div>
+
+  <div class="main">
+    <div class="crumbs" id="crumbs"></div>
+
+    <div class="bowls">
+      <div class="drop" id="bA"><div class="hint">Перетащи или кликни карточку</div></div>
+      <div class="drop" id="bB"><div class="hint">Перетащи или кликни карточку</div></div>
+    </div>
+
+    <div class="tools">
+      <input id="search" placeholder="Поиск по коллекции…">
+      <button id="reset" class="btn">Сброс</button>
+      <div class="count">Открыто: <span id="openCount">0</span> / <span id="totalCount">0</span> • <b style="color:#6fb1ff">v126c</b></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="dock">
+    <div class="inner">
+      <button id="hint" class="btn"><div class="hline1" id="h1">Подсказка</div><div class="hline2" id="h2">бесплатно</div></button>
+      <button id="mix" class="btn primary">Смешать</button>
+      <button id="clear" class="btn">Очистить чаши</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {"base": [{"id": "fire", "n": "Огонь", "e": "🔥", "r": "common"}, {"id": "water", "n": "Вода", "e": "💧", "r": "common"}, {"id": "earth", "n": "Земля", "e": "🪨", "r": "common"}, {"id": "air", "n": "Воздух", "e": "💨", "r": "common"}], "extra": {"plant": {"n": "Растение", "e": "🌿", "r": "common"}, "tree": {"n": "Дерево", "e": "🌳", "r": "common"}, "seed": {"n": "Семена", "e": "🌱", "r": "common"}, "flower": {"n": "Цветок", "e": "🌸", "r": "common"}, "mushroom": {"n": "Гриб", "e": "🍄", "r": "common"}, "forest": {"n": "Лес", "e": "🌲", "r": "common"}, "swamp": {"n": "Болото", "e": "🦠", "r": "common"}, "life": {"n": "Жизнь", "e": "🧬", "r": "common"}, "animal": {"n": "Животное", "e": "🐾", "r": "common"}, "fish": {"n": "Рыба", "e": "🐟", "r": "common"}, "bird": {"n": "Птица", "e": "🐦", "r": "common"}, "human": {"n": "Человек", "e": "🧑", "r": "common"}, "stone": {"n": "Камень", "e": "🗿", "r": "common"}, "sand": {"n": "Песок", "e": "🏖️", "r": "common"}, "glass": {"n": "Стекло", "e": "🪟", "r": "common"}, "metal": {"n": "Металл", "e": "🔩", "r": "common"}, "coal": {"n": "Уголь", "e": "🪵", "r": "common"}, "oil": {"n": "Нефть", "e": "🛢️", "r": "common"}, "clay": {"n": "Глина", "e": "🧱", "r": "common"}, "brick": {"n": "Кирпич", "e": "🧱", "r": "common"}, "lava": {"n": "Лава", "e": "🌋", "r": "common"}, "mountain": {"n": "Гора", "e": "⛰️", "r": "common"}, "canyon": {"n": "Каньон", "e": "🏜️", "r": "common"}, "diamond": {"n": "Алмаз", "e": "💎", "r": "common"}, "cloud": {"n": "Туча", "e": "☁️", "r": "common"}, "rain": {"n": "Дождь", "e": "🌧️", "r": "common"}, "storm": {"n": "Шторм", "e": "🌪️", "r": "common"}, "snow": {"n": "Снег", "e": "❄️", "r": "common"}, "ice": {"n": "Лёд", "e": "🧊", "r": "common"}, "wind": {"n": "Ветер", "e": "🍃", "r": "common"}, "pressure": {"n": "Давление", "e": "🧯", "r": "common"}, "heat": {"n": "Жара", "e": "🔥", "r": "common"}, "energy": {"n": "Энергия", "e": "⚡️", "r": "common"}, "lightning": {"n": "Молния", "e": "🌩️", "r": "common"}, "sun": {"n": "Солнце", "e": "☀️", "r": "common"}, "moon": {"n": "Луна", "e": "🌙", "r": "common"}, "time": {"n": "Время", "e": "⏳", "r": "common"}, "wheat": {"n": "Пшеница", "e": "🌾", "r": "common"}, "flour": {"n": "Мука", "e": "🥣", "r": "common"}, "dough": {"n": "Тесто", "e": "🥖", "r": "common"}, "bread": {"n": "Хлеб", "e": "🍞", "r": "common"}, "fruit": {"n": "Фрукт", "e": "🍎", "r": "common"}, "juice": {"n": "Сок", "e": "🧃", "r": "common"}, "milk": {"n": "Молоко", "e": "🥛", "r": "common"}, "cheese": {"n": "Сыр", "e": "🧀", "r": "common"}, "coffee": {"n": "Кофе", "e": "☕", "r": "common"}, "tea": {"n": "Чай", "e": "🍵", "r": "common"}, "sugar": {"n": "Сахар", "e": "🍬", "r": "common"}, "salt": {"n": "Соль", "e": "🧂", "r": "common"}, "meat": {"n": "Мясо", "e": "🥩", "r": "common"}, "egg": {"n": "Яйцо", "e": "🥚", "r": "common"}, "tool": {"n": "Инструмент", "e": "🛠️", "r": "common"}, "paper": {"n": "Бумага", "e": "📄", "r": "common"}, "book": {"n": "Книга", "e": "📚", "r": "common"}, "screen": {"n": "Экран", "e": "🖥️", "r": "common"}, "electricity": {"n": "Электричество", "e": "🔌", "r": "common"}, "wire": {"n": "Провод", "e": "🧵", "r": "common"}, "circuit": {"n": "Схема", "e": "🧩", "r": "common"}, "battery": {"n": "Батарея", "e": "🔋", "r": "common"}, "engine": {"n": "Двигатель", "e": "🛞", "r": "common"}, "car": {"n": "Машина", "e": "🚗", "r": "common"}, "boat": {"n": "Лодка", "e": "🛶", "r": "common"}, "ship": {"n": "Корабль", "e": "🚢", "r": "common"}, "computer": {"n": "Компьютер", "e": "💻", "r": "common"}, "internet": {"n": "Интернет", "e": "🌐", "r": "common"}, "app": {"n": "Приложение", "e": "📱", "r": "common"}, "robot": {"n": "Робот", "e": "🤖", "r": "common"}, "ai": {"n": "ИИ", "e": "🧠", "r": "common"}, "factory": {"n": "Фабрика", "e": "🏭", "r": "common"}, "plastic": {"n": "Пластик", "e": "🧴", "r": "common"}, "glass_fiber": {"n": "Стекловолокно", "e": "🧵", "r": "common"}, "rocket": {"n": "Ракета", "e": "🚀", "r": "common"}, "satellite": {"n": "Спутник", "e": "🛰️", "r": "common"}, "telescope": {"n": "Телескоп", "e": "🔭", "r": "common"}, "astronaut": {"n": "Астронавт", "e": "👨‍🚀", "r": "common"}, "planet": {"n": "Планета", "e": "🪐", "r": "common"}, "star": {"n": "Звезда", "e": "⭐", "r": "common"}, "galaxy": {"n": "Галактика", "e": "🌌", "r": "common"}, "universe": {"n": "Вселенная", "e": "💫", "r": "common"}, "gps": {"n": "GPS", "e": "📡", "r": "common"}, "extra80": {"n": "Элемент 80", "e": "✨", "r": "common"}, "extra81": {"n": "Элемент 81", "e": "✨", "r": "common"}, "extra82": {"n": "Элемент 82", "e": "✨", "r": "common"}, "extra83": {"n": "Элемент 83", "e": "✨", "r": "common"}, "extra84": {"n": "Элемент 84", "e": "✨", "r": "common"}, "extra85": {"n": "Элемент 85", "e": "✨", "r": "common"}, "extra86": {"n": "Элемент 86", "e": "✨", "r": "common"}, "extra87": {"n": "Элемент 87", "e": "✨", "r": "common"}, "extra88": {"n": "Элемент 88", "e": "✨", "r": "common"}, "extra89": {"n": "Элемент 89", "e": "✨", "r": "common"}, "extra90": {"n": "Элемент 90", "e": "✨", "r": "common"}, "extra91": {"n": "Элемент 91", "e": "✨", "r": "common"}, "extra92": {"n": "Элемент 92", "e": "✨", "r": "common"}, "extra93": {"n": "Элемент 93", "e": "✨", "r": "common"}, "extra94": {"n": "Элемент 94", "e": "✨", "r": "common"}, "extra95": {"n": "Элемент 95", "e": "✨", "r": "common"}, "extra96": {"n": "Элемент 96", "e": "✨", "r": "common"}, "extra97": {"n": "Элемент 97", "e": "✨", "r": "common"}, "extra98": {"n": "Элемент 98", "e": "✨", "r": "common"}, "extra99": {"n": "Элемент 99", "e": "✨", "r": "common"}, "extra100": {"n": "Элемент 100", "e": "✨", "r": "common"}, "extra101": {"n": "Элемент 101", "e": "✨", "r": "common"}, "extra102": {"n": "Элемент 102", "e": "✨", "r": "common"}, "extra103": {"n": "Элемент 103", "e": "✨", "r": "common"}, "extra104": {"n": "Элемент 104", "e": "✨", "r": "common"}, "extra105": {"n": "Элемент 105", "e": "✨", "r": "common"}, "extra106": {"n": "Элемент 106", "e": "✨", "r": "common"}, "extra107": {"n": "Элемент 107", "e": "✨", "r": "common"}, "extra108": {"n": "Элемент 108", "e": "✨", "r": "common"}, "extra109": {"n": "Элемент 109", "e": "✨", "r": "common"}, "extra110": {"n": "Элемент 110", "e": "✨", "r": "common"}, "extra111": {"n": "Элемент 111", "e": "✨", "r": "common"}, "extra112": {"n": "Элемент 112", "e": "✨", "r": "common"}, "extra113": {"n": "Элемент 113", "e": "✨", "r": "common"}, "extra114": {"n": "Элемент 114", "e": "✨", "r": "common"}, "extra115": {"n": "Элемент 115", "e": "✨", "r": "common"}, "extra116": {"n": "Элемент 116", "e": "✨", "r": "common"}, "extra117": {"n": "Элемент 117", "e": "✨", "r": "common"}, "extra118": {"n": "Элемент 118", "e": "✨", "r": "common"}, "extra119": {"n": "Элемент 119", "e": "✨", "r": "common"}, "extra120": {"n": "Элемент 120", "e": "✨", "r": "common"}, "extra121": {"n": "Элемент 121", "e": "✨", "r": "common"}, "extra122": {"n": "Элемент 122", "e": "✨", "r": "common"}, "extra123": {"n": "Элемент 123", "e": "✨", "r": "common"}, "extra124": {"n": "Элемент 124", "e": "✨", "r": "common"}, "extra125": {"n": "Элемент 125", "e": "✨", "r": "common"}, "extra126": {"n": "Элемент 126", "e": "✨", "r": "common"}, "extra127": {"n": "Элемент 127", "e": "✨", "r": "common"}, "extra128": {"n": "Элемент 128", "e": "✨", "r": "common"}, "extra129": {"n": "Элемент 129", "e": "✨", "r": "common"}, "extra130": {"n": "Элемент 130", "e": "✨", "r": "common"}, "extra131": {"n": "Элемент 131", "e": "✨", "r": "common"}, "extra132": {"n": "Элемент 132", "e": "✨", "r": "common"}, "extra133": {"n": "Элемент 133", "e": "✨", "r": "common"}, "extra134": {"n": "Элемент 134", "e": "✨", "r": "common"}, "extra135": {"n": "Элемент 135", "e": "✨", "r": "common"}, "extra136": {"n": "Элемент 136", "e": "✨", "r": "common"}, "extra137": {"n": "Элемент 137", "e": "✨", "r": "common"}, "extra138": {"n": "Элемент 138", "e": "✨", "r": "common"}, "extra139": {"n": "Элемент 139", "e": "✨", "r": "common"}, "extra140": {"n": "Элемент 140", "e": "✨", "r": "common"}, "extra141": {"n": "Элемент 141", "e": "✨", "r": "common"}, "extra142": {"n": "Элемент 142", "e": "✨", "r": "common"}, "extra143": {"n": "Элемент 143", "e": "✨", "r": "common"}, "extra144": {"n": "Элемент 144", "e": "✨", "r": "common"}, "extra145": {"n": "Элемент 145", "e": "✨", "r": "common"}}, "recipes": {"earth+fire": "lava", "fire+water": "steam", "earth+water": "mud", "air+earth": "dust", "air+water": "rain", "air+fire": "energy", "lava+water": "stone", "air+lava": "stone", "earth+lava": "volcano", "air+stone": "sand", "fire+sand": "glass", "air+air": "pressure", "earth+pressure": "mountain"}};
+const PRICE=10;
+const SAVE_KEY='elementix-v126c';
+const BASE=DATA.base, EXTRA=DATA.extra, RECIPES=DATA.recipes;
+const ALL=new Map(); BASE.forEach(b=>ALL.set(b.id,b)); Object.entries(EXTRA).forEach(([id,m])=>ALL.set(id,{id,n:m.n,e:m.e,r:m.r}));
+const DEFAULT_TOAST_MS = 3400;
+
+const $=id=>document.getElementById(id);
+const grid=$('grid'),openCount=$('openCount'),totalCount=$('totalCount'),bA=$('bA'),bB=$('bB'),crumbs=$('crumbs');
+
+let state={disc:new Set(BASE.map(x=>x.id)),order:[...BASE.map(x=>x.id)],a:null,b:null,stars:20};
+try{ const raw=localStorage.getItem(SAVE_KEY); if(raw){ const o=JSON.parse(raw); state.disc=new Set(o.d||BASE.map(x=>x.id)); state.order=o.o||[...state.disc]; state.a=o.a||null; state.b=o.b||null; }}catch{}
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify({d:[...state.disc],o:state.order,a:state.a,b:state.b})); }
+
+function asList(q=''){ q=(q||'').toLowerCase(); const opened=[...state.order].filter(id=>state.disc.has(id) && ALL.get(id).n.toLowerCase().includes(q)); const locked=[...ALL.keys()].filter(id=>!state.disc.has(id) && ALL.get(id).n.toLowerCase().includes(q)); return opened.concat(locked); }
+function cardHTML(id,opened){ const it=ALL.get(id); return `<div class="card ${opened?'':'locked'}" data-id="${id}" draggable="${opened}"><div class="tag">Обычный</div><div class="emoji">${opened?it.e:'❓'}</div><div class="name">${opened?it.n:'???'}</div></div>`; }
+function renderDex(q=''){ grid.innerHTML=''; for(const id of asList(q)){ const opened=state.disc.has(id); const w=document.createElement('div'); w.innerHTML=cardHTML(id,opened); const card=w.firstChild; if(opened){ card.addEventListener('click',()=>selectByClick(id)); card.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',id); }); } grid.appendChild(card);} openCount.textContent=state.disc.size; totalCount.textContent=ALL.size; }
+function bowlBlock(id){ if(!id) return '<div class="hint">Перетащи или кликни карточку</div>'; const it=ALL.get(id); return `<div class="selection"><div class="emoji">${it.e}</div><div class="name">${it.n}</div></div>`; }
+function renderBowls(){ bA.innerHTML=bowlBlock(state.a); bB.innerHTML=bowlBlock(state.b); renderCrumbs(); }
+[bA,bB].forEach((b,ix)=>{ b.addEventListener('dragover',e=>e.preventDefault()); b.addEventListener('drop',e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(ix===0) state.a=id; else state.b=id; renderBowls(); save(); }); });
+function selectByClick(id){ if(!state.a) state.a=id; else if(!state.b) state.b=id; else { state.a=id; state.b=null; } renderBowls(); save(); }
+$('search').addEventListener('input',(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(()=>renderDex($('search').value),120);} })());
+$('reset').addEventListener('click',()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); });
+
+function renderCrumbs(){ const parts=[]; if(state.a){ const it=ALL.get(state.a); parts.push(`<div class="token"><div class="emo">${it.e}</div></div>`);} if(state.b){ const it=ALL.get(state.b); parts.push(`<div class="token"><div class="emo">${it.e}</div></div>`);} crumbs.innerHTML = parts.join('') || '<div style="color:#9fb0bf;font-size:12px;padding:2px 6px">Выбери 2 элемента…</div>'; }
+
+function toast(msg,ms=DEFAULT_TOAST_MS){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),ms); }
+
+$('clear').addEventListener('click',()=>{ state.a=null; state.b=null; renderBowls(); save(); });
+
+$('mix').addEventListener('click',()=>{
+  if(!state.a||!state.b){ toast('Нужно 2 элемента'); return; }
+  const key=[state.a,state.b].sort().join('+'); const out=RECIPES[key];
+  if(!out){ toast('Пустая реакция…'); return; }
+  const wasNew=!state.disc.has(out); state.disc.add(out); if(wasNew){ state.order=state.order.filter(x=>x!==out); state.order.push(out); }
+  state.a=null; state.b=null; renderBowls(); renderDex($('search').value); const it=ALL.get(out)||{e:'✨',n:out}; toast((wasNew?'Новый элемент: ':'')+it.e+' '+it.n); save();
+});
+
+function init(){ renderDex(); renderBowls(); }
+init();
+</script>
+</body>
+</html>
