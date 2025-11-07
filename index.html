@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elementix — алхимия</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>🧪</text></svg>">
+  <style>
+    :root{
+      --bg:#0e1115; --panel:#141a22; --panel-2:#0b1218; --line:#223042;
+      --ink:#e6eaf0; --muted:#9fb0bf; --accent:#7aa2ff; --gold:#ffd166; --danger:#ffb4a2;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+    body{background:radial-gradient(1000px 520px at 80% -10%, #1a2430, #0e1115),linear-gradient(#0e1115,#0e1115)}
+
+    .app{min-height:100%;display:flex;flex-direction:column}
+    .header{position:sticky;top:0;z-index:10;background:rgba(14,17,21,.8);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 14px}
+    .logo{width:28px;height:28px;display:grid;place-items:center;background:#243244;border:1px solid #2d3c52;border-radius:8px}
+    .title{font-weight:800}
+    .sub{font-size:12px;color:var(--muted)}
+    .spacer{flex:1}
+    .pill{display:flex;align-items:center;gap:6px;background:#152031;border:1px solid #26324a;color:var(--gold);border-radius:999px;padding:6px 10px;font-weight:800}
+
+    .wrap{display:grid;grid-template-columns:1fr;gap:12px;padding:12px}
+    @media (min-width:1000px){.wrap{grid-template-columns:1.25fr .75fr}}
+
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.25)}
+    .lab{display:grid;grid-template-rows:auto 1fr;gap:10px;padding:12px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{background:#243244;border:1px solid #304059;color:#cfe1ff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent);border:none;color:#07101c;font-weight:900}
+    .btn.ghost{background:transparent;border:1px dashed #2a384b;color:#9bb7ff}
+    .btn.danger{background:#2a1d1d;border:1px solid #542e2e;color:#ffd8d2}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .bowls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .bowl{position:relative;background:var(--panel-2);border:1px dashed #2a384b;border-radius:16px;min-height:180px;display:grid;place-items:center;overflow:hidden}
+    .bowl .hint{position:absolute;top:8px;left:12px;color:var(--muted);font-size:12px}
+    .bowl .clear{position:absolute;top:8px;right:8px;background:#152031;border:1px solid #26324a;color:#cfe1ff;border-radius:9px;padding:4px 8px;font-size:11px;cursor:pointer}
+    .picked{display:flex;gap:8px;align-items:center}
+    .picked .emoji{font-size:30px}
+    .picked .name{font-size:13px}
+
+    .dex{display:grid;grid-template-rows:auto auto 1fr;gap:10px;padding:12px}
+    .search{display:flex;gap:8px}
+    .search input{flex:1;background:#0b1218;border:1px solid var(--line);border-radius:10px;color:#cfe1ff;padding:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(105px,1fr));gap:10px}
+    .card{background:linear-gradient(180deg,#101821,#0b1218);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:6px;cursor:grab;user-select:none;position:relative;transition:transform .12s ease, box-shadow .2s ease}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.25)}
+    .card.locked{opacity:.45;filter:grayscale(.25);cursor:not-allowed}
+    .emoji{font-size:30px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.35))}
+    .name{font-size:12px;color:#cfe1ff}
+    .tag{position:absolute;top:8px;right:8px;font-size:10px;background:#162033;border:1px solid #26324a;border-radius:999px;padding:2px 6px}
+    .tag.common{color:#9fb0bf}.tag.rare{color:#7aa2ff}.tag.epic{color:#e19cff}
+
+    .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#0b1218;border:1px solid var(--line);color:#cfe1ff;padding:10px 14px;border-radius:12px;opacity:0;animation:pop .9s ease-out forwards;z-index:60}
+    @keyframes pop{0%{transform:translateX(-50%) translateY(8px);opacity:0}20%{opacity:1}100%{transform:translateX(-50%) translateY(0);opacity:1}}
+
+    /* Floating unified hint button */
+    .fab-hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;pointer-events:none}
+    .fab-hint .btn{pointer-events:auto;border-radius:999px;background:#152031;border:1px solid #26324a;color:#cfe1ff;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+
+    /* Floating Mix & Clear cluster (bottom-right) */
+    .fab-cluster{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+    .fab-cluster .btn{pointer-events:auto;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+    .fab-cluster .mix{background:var(--accent);border:none;color:#06101c;font-weight:900}
+    .fab-cluster .clearall{background:#152031;border:1px solid #26324a;color:#cfe1ff}
+
+    /* Mini bowls preview (top-right) */
+    .mini{position:fixed;right:12px;top:70px;z-index:40;background:#0b1218;border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+    .mini .slot{display:flex;gap:6px;align-items:center;background:#0f1620;border:1px solid #223042;border-radius:10px;padding:6px 8px;min-width:90px}
+    .mini .slot .emoji{font-size:20px}
+    .mini .slot .name{font-size:12px;color:#cfe1ff}
+    .mini .x{background:#2a3242;border:1px solid #3a475f;border-radius:8px;padding:4px 6px;font-size:11px;cursor:pointer}
+    .mini .sep{width:1px;height:24px;background:#223042}
+
+    .journal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70}
+    .journal .inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(720px,92vw);max-height:80vh;overflow:auto;background:#0b1218;border:1px solid var(--line);border-radius:16px;padding:16px}
+
+    .splash{position:fixed;inset:0;display:grid;place-items:center;background:rgba(11,18,24,.96);z-index:100}
+    .spin{width:16px;height:16px;border:2px solid #304059;border-top-color:#7aa2ff;border-radius:50%;animation:rot .8s linear infinite}
+    @keyframes rot{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="splash" id="splash"><div class="btn" style="display:flex;gap:10px;align-items:center"><div class="spin"></div><b>Elementix</b><span style="color:var(--muted)">запускается…</span></div></div>
+
+  <div class="app" id="app" hidden>
+    <div class="header">
+      <div class="logo">🧪</div>
+      <div>
+        <div class="title">Elementix — алхимия</div>
+        <div class="sub">100 элементов • Журнал • Подсказки</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="pill">⭐ <span id="stars">0</span></div>
+      <button id="openJournal" class="btn ghost">Журнал</button>
+    </div>
+
+    <div class="wrap">
+      <div class="panel lab">
+        <div class="bowls">
+          <div class="bowl" id="bA"><div class="hint">Перетащи или кликни карточку</div></div>
+          <div class="bowl" id="bB"><div class="hint">Перетащи или кликни карточку</div></div>
+        </div>
+      </div>
+
+      <div class="panel dex">
+        <div class="search">
+          <input id="search" placeholder="Поиск по коллекции…">
+          <button id="reset" class="btn">Сброс</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">Открыто: <span id="openCount">0</span> / <span id="totalCount">0</span></div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+
+    <!-- Floating buttons -->
+    <div class="fab-hint"><button id="hintBtn" class="btn">Подсказка</button></div>
+    <div class="fab-cluster">
+      <button id="mix" class="btn mix">Смешать</button>
+      <button id="clearAll" class="btn clearall">Очистить чаши</button>
+    </div>
+
+    <!-- Mini bowls preview -->
+    <div class="mini" id="mini">
+      <div class="slot" id="miniA"><div class="emoji">▫️</div><div class="name">A пусто</div></div>
+      <div class="sep"></div>
+      <div class="slot" id="miniB"><div class="emoji">▫️</div><div class="name">B пусто</div></div>
+      <button class="x" id="miniClear">×</button>
+    </div>
+
+    <div class="journal" id="journal">
+      <div class="inner">
+        <div style="display:flex;gap:10px;align-items:center"><h3 style="flex:1;margin:0">Журнал открытий</h3><button id="closeJournal" class="btn">Закрыть</button></div>
+        <div id="jList"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===== Data & state =====
+const R = {C:'common', R:'rare', E:'epic'};
+const SAVE_KEY = 'elementix-v2';
+const PRICE = 10;
+
+const BASE = [
+  {id:'fire', n:'Огонь', e:'🔥', r:R.C},
+  {id:'water', n:'Вода', e:'💧', r:R.C},
+  {id:'earth', n:'Земля', e:'🪨', r:R.C},
+  {id:'air', n:'Воздух', e:'💨', r:R.C},
+];
+
+// 96 extras (to reach 100 total)
+const EXTRA = {
+  steam:{n:'Пар',e:'♨️',r:R.C}, mud:{n:'Грязь',e:'🟫',r:R.C}, dust:{n:'Пыль',e:'🧹',r:R.C},
+  stone:{n:'Камень',e:'🗿',r:R.C}, sand:{n:'Песок',e:'🏖️',r:R.C}, glass:{n:'Стекло',e:'🪟',r:R.C},
+  metal:{n:'Металл',e:'🔩',r:R.C}, energy:{n:'Энергия',e:'⚡️',r:R.C}, lava:{n:'Лава',e:'🌋',r:R.C},
+  cloud:{n:'Туча',e:'☁️',r:R.C}, lightning:{n:'Молния',e:'🌩️',r:R.R}, ore:{n:'Руда',e:'⛏️',r:R.C},
+  ice:{n:'Лёд',e:'🧊',r:R.C}, snow:{n:'Снег',e:'❄️',r:R.C}, clay:{n:'Глина',e:'🪵',r:R.C},
+  brick:{n:'Кирпич',e:'🧱',r:R.C}, coal:{n:'Уголь',e:'⚫️',r:R.C}, iron:{n:'Железо',e:'⚙️',r:R.C},
+  gold:{n:'Золото',e:'🪙',r:R.R}, diamond:{n:'Алмаз',e:'💎',r:R.R},
+
+  storm:{n:'Шторм',e:'🌪️',r:R.R}, rain:{n:'Дождь',e:'🌧️',r:R.C}, fog:{n:'Туман',e:'🌫️',r:R.C},
+  volcano:{n:'Вулкан',e:'🌋',r:R.R}, rainbow:{n:'Радуга',e:'🌈',r:R.R}, thunder:{n:'Гром',e:'⚡️☁️',r:R.R},
+  tornado:{n:'Торнадо',e:'🌪️',r:R.R}, ocean:{n:'Океан',e:'🌊',r:R.C}, mountain:{n:'Гора',e:'⛰️',r:R.C},
+  quake:{n:'Землетрясение',e:'🌍💥',r:R.R},
+
+  life:{n:'Жизнь',e:'🧬',r:R.R}, microbe:{n:'Микроб',e:'🦠',r:R.C}, algae:{n:'Водоросли',e:'🪸',r:R.C},
+  plant:{n:'Растение',e:'🌿',r:R.C}, seed:{n:'Семена',e:'🌱',r:R.C}, flower:{n:'Цветок',e:'🌸',r:R.C},
+  swamp:{n:'Болото',e:'🪵',r:R.C}, fish:{n:'Рыба',e:'🐟',r:R.C}, amphibian:{n:'Амфибия',e:'🐸',r:R.C},
+  reptile:{n:'Рептилия',e:'🦎',r:R.C}, bird:{n:'Птица',e:'🐦',r:R.C}, mammal:{n:'Млекопитающее',e:'🐾',r:R.C},
+  human:{n:'Человек',e:'🧑',r:R.R}, animal:{n:'Животное',e:'🐕',r:R.C}, insect:{n:'Насекомое',e:'🐞',r:R.C},
+  bacteria:{n:'Бактерия',e:'🧫',r:R.C}, fungus:{n:'Гриб',e:'🍄',r:R.C}, grass:{n:'Трава',e:'🌾',r:R.C},
+  forest:{n:'Лес',e:'🌳',r:R.C}, tree:{n:'Дерево',e:'🌲',r:R.C},
+
+  tool:{n:'Инструмент',e:'🪓',r:R.C}, weapon:{n:'Оружие',e:'⚔️',r:R.R}, mechanism:{n:'Механизм',e:'⚙️',r:R.R},
+  car:{n:'Машина',e:'🚗',r:R.C}, airplane:{n:'Самолёт',e:'✈️',r:R.R}, sail:{n:'Парусник',e:'⛵',r:R.C},
+  rocket:{n:'Ракета',e:'🚀',r:R.R}, robot:{n:'Робот',e:'🤖',r:R.R}, computer:{n:'Компьютер',e:'💻',r:R.R},
+  phone:{n:'Телефон',e:'📱',r:R.R}, radio:{n:'Радио',e:'📻',r:R.C}, electricity:{n:'Электричество',e:'🔌',r:R.R},
+  house:{n:'Дом',e:'🏠',r:R.C}, city:{n:'Город',e:'🏙️',r:R.R}, factory:{n:'Завод',e:'🏭',r:R.R},
+  internet:{n:'Интернет',e:'🌐',r:R.R}, drone:{n:'Дрон',e:'🚁',r:R.R}, telescope:{n:'Телескоп',e:'🔭',r:R.R},
+  satellite:{n:'Спутник',e:'🛰️',r:R.R}, space:{n:'Космос',e:'🌌',r:R.R},
+
+  soul:{n:'Душа',e:'💫',r:R.R}, magic:{n:'Магия',e:'🔮',r:R.R}, crystal:{n:'Кристалл',e:'💎',r:R.R},
+  wizard:{n:'Волшебник',e:'🧙‍♂️',r:R.R}, ghost:{n:'Призрак',e:'👻',r:R.R}, zombie:{n:'Зомби',e:'🧟‍♂️',r:R.R},
+  vampire:{n:'Вампир',e:'🧛‍♂️',r:R.R}, elf:{n:'Эльф',e:'🧝‍♂️',r:R.R}, dragon:{n:'Дракон',e:'🐉',r:R.E},
+  phoenix:{n:'Феникс',e:'🦅🔥',r:R.E}, artifact:{n:'Артефакт',e:'🧿',r:R.E},
+  grimoire:{n:'Гримуар',e:'📖✨',r:R.E}, lightsword:{n:'Меч света',e:'🗡️',r:R.R},
+  alchemist:{n:'Алхимик',e:'⚗️',r:R.R}, homunculus:{n:'Гомункулус',e:'🧬👶',r:R.E},
+  philosopher:{n:'Философский камень',e:'🪨✨',r:R.E},
+
+  star:{n:'Звезда',e:'⭐',r:R.R}, moon:{n:'Луна',e:'🌙',r:R.R}, sun:{n:'Солнце',e:'☀️',r:R.R},
+  planet:{n:'Планета',e:'🪐',r:R.R}, comet:{n:'Комета',e:'☄️',r:R.R}, blackhole:{n:'Чёрная дыра',e:'🕳️',r:R.E},
+  time:{n:'Время',e:'⏳',r:R.E}, spacewarp:{n:'Пространство',e:'🌀',r:R.R}, gravity:{n:'Гравитация',e:'🪶',r:R.R},
+  universe:{n:'Вселенная',e:'🌠',r:R.E}
+};
+
+// Classic fixed recipes for early game (optional, the rest is generated by progression)
+const FIXED = {
+  'fire+water':'steam',
+  'earth+water':'mud',
+  'air+earth':'dust',
+  'fire+earth':'lava',
+  'air+water':'cloud',
+  'sand+fire':'glass',
+  'stone+air':'sand',
+  'lava+water':'stone',
+  'ore+fire':'iron',
+  'earth+metal':'ore',
+  'energy+mud':'life'
+};
+
+const ALL = (()=>{
+  const map = new Map();
+  for(const b of BASE) map.set(b.id,b);
+  for(const [id,meta] of Object.entries(EXTRA)) map.set(id,{id, n:meta.n, e:meta.e, r:meta.r});
+  return map;
+})();
+
+let state = {
+  disc: new Set(BASE.map(x=>x.id)),
+  a:null, b:null,
+  j:[],
+  stars: 0,
+  daily: {date:dayKey(), used:false, paid:0},
+  usedPairs: {} // pairKey -> true
+};
+
+function dayKey(){ return new Date().toISOString().slice(0,10); }
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify({ d:[...state.disc], a:state.a, b:state.b, j:state.j.slice(0,120), stars:state.stars, daily:state.daily, usedPairs:state.usedPairs })); }
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const o = JSON.parse(raw);
+      state.disc = new Set(o.d||BASE.map(x=>x.id));
+      state.a=o.a||null; state.b=o.b||null;
+      state.j=Array.isArray(o.j)?o.j:[];
+      state.stars=Number.isFinite(o.stars)?o.stars:0;
+      state.daily=o.daily||state.daily;
+      state.usedPairs=o.usedPairs||{};
+    }
+  }catch{}
+  if(state.daily.date!==dayKey()) state.daily={date:dayKey(), used:false, paid:0};
+}
+
+// ===== Helpers/UI =====
+const el = id=>document.getElementById(id);
+const grid = el('grid'), openCount = el('openCount'), totalCount = el('totalCount');
+const bA = el('bA'), bB = el('bB');
+const mixBtn = el('mix'), clearAllBtn = el('clearAll');
+const starsEl = el('stars');
+const jEl = el('journal'), jList = el('jList');
+const hintBtn = el('hintBtn');
+const mini = el('mini'), miniA = el('miniA'), miniB = el('miniB');
+
+function tag(r){return r===R.E?'epic':r===R.R?'rare':'common'}
+function cardHTML(id, opened){
+  const it = ALL.get(id);
+  const rarity = `<div class="tag ${tag(it.r)}">${it.r===R.E?'Эпический':it.r===R.R?'Редкий':'Обычный'}</div>`;
+  return `<div class="card ${opened?'clickable':'locked'}" data-id="${id}" draggable="${opened?true:false}">${rarity}<div class="emoji">${opened?it.e:'❓'}</div><div class="name">${opened?it.n:'???'}</div></div>`;
+}
+function renderDex(filter=''){
+  const q=filter.toLowerCase();
+  grid.innerHTML='';
+  for(const it of [...ALL.values()].filter(i=>i.n.toLowerCase().includes(q))){
+    const opened = state.disc.has(it.id);
+    const d = document.createElement('div'); d.innerHTML = cardHTML(it.id, opened);
+    const card = d.firstChild;
+    if(opened){
+      card.addEventListener('click', ()=>selectByClick(it.id));
+      card.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', it.id); });
+    }
+    grid.appendChild(card);
+  }
+  openCount.textContent = state.disc.size;
+  totalCount.textContent = ALL.size;
+}
+function bowlBlock(id){
+  if(!id) return '<div class="hint">Перетащи или кликни карточку</div>';
+  const it = ALL.get(id);
+  return `<div class="picked"><div class="emoji">${it.e}</div><div class="name">${it.n}</div></div>`;
+}
+function renderBowls(){
+  bA.innerHTML = bowlBlock(state.a);
+  bB.innerHTML = bowlBlock(state.b);
+  // mini preview
+  function miniFill(slot, id, label){
+    if(!id){ slot.innerHTML='<div class="emoji">▫️</div><div class="name">'+label+' пусто</div>'; return; }
+    const it=ALL.get(id); slot.innerHTML='<div class="emoji">'+it.e+'</div><div class="name">'+it.n+'</div>';
+  }
+  miniFill(miniA, state.a, 'A'); miniFill(miniB, state.b, 'B');
+}
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1100);
+}
+
+// drag & drop bowls
+[bA,bB].forEach((b,idx)=>{
+  b.addEventListener('dragover', e=>e.preventDefault());
+  b.addEventListener('drop', e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(idx===0) state.a=id; else state.b=id; renderBowls(); save(); });
+});
+document.addEventListener('click', e=>{
+  if(e.target.id==='miniClear'){ state.a=null; state.b=null; renderBowls(); save(); return; }
+});
+
+function selectByClick(id){
+  if(!state.a) state.a=id;
+  else if(!state.b) state.b=id;
+  else { state.a=id; state.b=null; }
+  renderBowls(); save();
+}
+
+// search/reset
+el('search').addEventListener('input', (()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(()=>renderDex(el('search').value),120);} })());
+el('reset').addEventListener('click', ()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); });
+
+// ===== Crafting =====
+function pairKey(a,b){ return [a,b].sort().join('+'); }
+
+// Choose next undiscovered id deterministically but varied
+const DISCOVERY_ORDER = (()=>{
+  const ids = Object.keys(EXTRA); // 96
+  // stable shuffle by hash
+  function h(s){ let x=0; for(let i=0;i<s.length;i++){ x=(x*131 + s.charCodeAt(i))>>>0; } return x; }
+  ids.sort((x,y)=> (h('A'+x)-h('B'+y)) );
+  return ids;
+})();
+
+function nextLocked(){
+  for(const id of DISCOVERY_ORDER){ if(!state.disc.has(id)) return id; }
+  return null;
+}
+
+function combine(a,b){
+  const pk = pairKey(a,b);
+  // classic fixed early recipes first
+  if(FIXED[pk]) return FIXED[pk];
+  // if pair unused yet and there are locked elements, craft the next one
+  if(!state.usedPairs[pk]){
+    const n = nextLocked();
+    if(n){ state.usedPairs[pk]=true; return n; }
+  }
+  return null;
+}
+
+mixBtn.addEventListener('click', ()=>{
+  if(!state.a||!state.b){ toast('Нужно 2 элемента'); return;}
+  const out = combine(state.a,state.b);
+  if(!out){ toast('Пустая реакция…'); return; }
+  const wasNew = !state.disc.has(out);
+  state.disc.add(out);
+  state.a=null; state.b=null;
+  renderBowls(); renderDex(el('search').value); save();
+  const it = ALL.get(out);
+  if(wasNew){
+    state.j.unshift({id:out, t:Date.now()}); state.j = state.j.slice(0,200); save();
+    toast(`Новый: ${it.e} ${it.n}`);
+  } else {
+    toast(`${it.e} ${it.n}`);
+  }
+});
+
+// clear all
+clearAllBtn.addEventListener('click', ()=>{ state.a=null; state.b=null; renderBowls(); save(); });
+
+// journal
+el('openJournal').addEventListener('click', ()=>{ renderJournal(); jEl.style.display='block'; });
+el('closeJournal').addEventListener('click', ()=>{ jEl.style.display='none'; });
+jEl.addEventListener('click', e=>{ if(e.target===jEl) jEl.style.display='none'; });
+function renderJournal(){
+  const tag = r=> r===R.E?'Эпический' : r===R.R?'Редкий':'Обычный';
+  jList.innerHTML='';
+  for(const rec of state.j){
+    const it=ALL.get(rec.id); const time=new Date(rec.t).toLocaleString();
+    const row=document.createElement('div'); row.className='entry';
+    row.innerHTML=`<div style="font-size:22px">${it.e}</div><div><div><b>${it.n}</b> · <span class="tag ${it.r===R.E?'epic':it.r===R.R?'rare':'common'}">${tag(it.r)}</span></div><div style="color:var(--muted);font-size:12px">${time}</div></div>`;
+    jList.appendChild(row);
+  }
+}
+
+// unified hint button (free daily → stars)
+function reflectHintButton(){
+  if(!state.daily.used){
+    hintBtn.textContent = 'Подсказка (бесплатно)';
+  } else if(state.daily.paid>0){
+    hintBtn.textContent = `Ещё подсказка ⭐ (осталось: ${state.daily.paid})`;
+  } else {
+    hintBtn.textContent = 'Купить подсказку ⭐10';
+  }
+  el('stars').textContent = state.stars;
+}
+function findHint(){
+  // If any locked left, suggest a discovered pair that is unused yet
+  const opened = [...state.disc];
+  const pairsTried = new Set(Object.keys(state.usedPairs||{}));
+  for(let i=0;i<opened.length;i++){
+    for(let j=i+1;j<opened.length;j++){
+      const pk = pairKey(opened[i], opened[j]);
+      if(!pairsTried.has(pk)){ const A=ALL.get(opened[i]).n, B=ALL.get(opened[j]).n; return `${A} + ${B}`; }
+    }
+  }
+  return 'Попробуй разные комбинации';
+}
+function useHint(paid){
+  const s = findHint();
+  if(paid){
+    if(state.daily.paid<=0){ toast('Нет оплаченных подсказок'); return; }
+    state.daily.paid--;
+  }else{
+    if(state.daily.used){ toast('Бесплатная подсказка уже использована сегодня'); return; }
+    state.daily.used=true;
+  }
+  save(); toast('Попробуй: '+s); reflectHintButton();
+}
+hintBtn.addEventListener('click', ()=>{
+  if(!state.daily.used){ useHint(false); }
+  else if(state.daily.paid>0){ useHint(true); }
+  else {
+    const ok = confirm(`Купить подсказку за ⭐${PRICE}? Баланс: ${state.stars}`);
+    if(!ok) return;
+    if(state.stars<PRICE){ alert('Недостаточно звёзд'); return; }
+    state.stars-=PRICE; state.daily.paid++; save(); reflectHintButton(); toast('Куплена подсказка ⭐');
+  }
+});
+
+// keyboard
+document.addEventListener('keydown', e=>{
+  if(e.key==='m'||e.key==='M') mixBtn.click();
+  if(e.key==='Escape'){ state.a=null; state.b=null; renderBowls(); save(); }
+});
+
+// init
+(function init(){
+  load();
+  renderDex(); renderBowls(); reflectHintButton();
+  setTimeout(()=>{ try{document.getElementById('splash').remove()}catch{}; try{document.getElementById('app').hidden=false}catch{}; }, 350);
+  // totals
+  console.log('TOTAL ELEMENTS:', ALL.size); // 100
+})();
+</script>
+</body>
+</html>
