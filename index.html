@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Elementix — алхимия</title>
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>🧪</text></svg>">
+<style>
+:root{
+  --bg:#0e1115; --panel:#141a22; --panel2:#0b1218; --line:#223042;
+  --ink:#e6eaf0; --muted:#9fb0bf; --accent:#7aa2ff; --gold:#ffd166; --rose:#ffb4a2;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+body{background:radial-gradient(900px 520px at 80% -10%, #1a2430, #0e1115),linear-gradient(#0e1115,#0e1115)}
+
+/* App shell */
+.app{min-height:100%;display:flex;flex-direction:column}
+
+/* Smart header that compresses into a tiny strip when scrolling */
+.header{position:sticky;top:0;z-index:30;background:rgba(14,17,21,.82);backdrop-filter:blur(10px);border-bottom:1px solid #1e2734;transition:all .25s ease}
+.header .row{display:flex;align-items:center;gap:10px;padding:12px 12px;transition:padding .25s ease}
+.header .logo{width:26px;height:26px;display:grid;place-items:center;background:#243244;border:1px solid #2d3c52;border-radius:7px;transform-origin:left center;transition:transform .25s ease}
+.header .h-title{font-weight:800;transition:opacity .25s ease}
+.header .h-sub{font-size:11px;color:var(--muted);transition:opacity .25s ease}
+.header .spacer{flex:1}
+.header .stars{display:flex;align-items:center;gap:6px;background:#152031;border:1px solid #26324a;color:var(--gold);border-radius:999px;padding:6px 10px;font-weight:800;transition:transform .25s ease}
+.header.compact .row{padding:6px 10px}
+.header.compact .logo{transform:scale(.82)}
+.header.compact .h-title,.header.compact .h-sub{opacity:.0; pointer-events:none}
+.header.compact .stars{transform:scale(.9)}
+
+/* Layout */
+.wrap{display:grid;grid-template-columns:1fr;gap:12px;padding:12px 12px 110px}
+@media (min-width:1000px){.wrap{grid-template-columns:1.2fr .8fr}}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.lab{display:grid;grid-template-rows:auto 1fr auto;gap:12px;padding:12px}
+
+/* Bowls */
+.bowls{display:grid;grid-template-columns:1fr 1fr;gap:12px;transition:transform .22s ease}
+.bowls.focus{transform:scale(1.015)}
+.bowl{position:relative;background:var(--panel2);border:1px dashed #2a384b;border-radius:16px;min-height:196px;display:grid;place-items:center;overflow:hidden;animation:fadeIn .35s ease both}
+.bowl .hint{position:absolute;top:8px;left:12px;color:var(--muted);font-size:12px}
+.bowl .clear{position:absolute;top:8px;right:8px;background:#152031;border:1px solid #26324a;color:#cfe1ff;border-radius:9px;padding:5px 9px;font-size:11px;cursor:pointer}
+.picked{display:flex;gap:10px;align-items:center}
+.picked .emoji{font-size:34px;animation:bob .8s ease-in-out infinite alternate}
+.picked .name{font-size:13px}
+
+@keyframes bob{to{transform:translateY(-2px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Dex */
+.dex{display:grid;grid-template-rows:auto auto 1fr;gap:10px;padding:12px}
+.search{display:flex;gap:8px}
+.search input{flex:1;background:#0b1218;border:1px solid var(--line);border-radius:10px;color:#cfe1ff;padding:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(108px,1fr));gap:10px}
+.card{background:linear-gradient(180deg,#101821,#0b1218);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:6px;cursor:grab;user-select:none;position:relative;transition:transform .12s ease, box-shadow .2s ease;animation:fadeIn .35s ease both}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 18px rgba(0,0,0,.26)}
+.card.locked{opacity:.45;filter:grayscale(.25);cursor:not-allowed}
+.emoji{font-size:30px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.35))}
+.name{font-size:12px;color:#cfe1ff}
+.tag{position:absolute;top:8px;right:8px;font-size:10px;background:#162033;border:1px solid #26324a;border-radius:999px;padding:2px 6px}
+.tag.common{color:#a5b4c2}.tag.rare{color:#7aa2ff}.tag.epic{color:#e19cff}
+
+/* Bottom Action Dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg, rgba(14,17,21,.0), rgba(14,17,21,.9));padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.dock .inner{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;max-width:860px;width:100%}
+.btn{background:#243244;border:1px solid #304059;color:#cfe1ff;border-radius:16px;padding:14px 14px;font-weight:700;cursor:pointer;transition:transform .06s ease}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);border:none;color:#07101c;font-weight:900;padding:16px 24px;border-radius:20px;font-size:16px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.hintBtn{display:flex;gap:10px;align-items:center;justify-content:center;white-space:nowrap}
+.badge{background:#162033;border:1px solid #26324a;padding:3px 10px;border-radius:999px;font-size:11px}
+.badge.gold{color:var(--gold)}
+.badge.timer{color:#9bd2ff}
+
+/* Toast & Modal */
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#0b1218;border:1px solid var(--line);color:#cfe1ff;padding:10px 14px;border-radius:12px;opacity:0;animation:pop .9s ease-out forwards;z-index:60}
+@keyframes pop{0%{transform:translateX(-50%) translateY(8px);opacity:0}20%{opacity:1}100%{transform:translateX(-50%) translateY(0);opacity:1}}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70}
+.modal .card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:#0b1218;border:1px solid var(--line);border-radius:16px;padding:16px}
+.modal .title{font-weight:800;margin-bottom:8px}
+
+/* Splash */
+.splash{position:fixed;inset:0;display:grid;place-items:center;background:rgba(11,18,24,.96);z-index:100}
+.spin{width:16px;height:16px;border:2px solid #304059;border-top-color:#7aa2ff;border-radius:50%;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="splash" id="splash"><div class="btn" style="display:flex;gap:10px;align-items:center"><div class="spin"></div><b>Elementix</b><span style="color:var(--muted)">запускается…</span></div></div>
+
+<div class="app" id="app" hidden>
+  <div class="header" id="hdr">
+    <div class="row">
+      <div class="logo">🧪</div>
+      <div>
+        <div class="h-title">Elementix — алхимия</div>
+        <div class="h-sub">100 элементов • Рецепты • Журнал • Подсказки</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="stars">⭐ <span id="stars">0</span></div>
+      <button id="openJournal" class="btn">Журнал</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="panel lab">
+      <div class="bowls" id="bowls">
+        <div class="bowl" id="bA"><div class="hint">Перетащи или кликни карточку</div><button class="clear" data-clear="A">Очистить</button></div>
+        <div class="bowl" id="bB"><div class="hint">Перетащи или кликни карточку</div><button class="clear" data-clear="B">Очистить</button></div>
+      </div>
+      <div class="h-sub" style="text-align:center">Сохранение локально • Stars — имитация • <b style="color:#7aa2ff">v121</b></div>
+    </div>
+
+    <div class="panel dex">
+      <div class="search">
+        <input id="search" placeholder="Поиск по коллекции…">
+        <button id="reset" class="btn">Сброс</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted)">Открыто: <span id="openCount">0</span> / <span id="totalCount">0</span></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Dock -->
+  <div class="dock">
+    <div class="inner">
+      <button id="hint" class="btn hintBtn" title="Подсказка">
+        <span id="hintLabel">Подсказка</span>
+        <span id="hintBadge" class="badge">бесплатно</span>
+      </button>
+      <button id="mix" class="btn primary">Смешать</button>
+      <button id="clear" class="btn">Очистить чаши</button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="card">
+      <div class="title" id="modalTitle">Подсказки</div>
+      <div id="modalBody" style="color:var(--muted);margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="mClose" class="btn">Закрыть</button>
+        <button id="mAction" class="btn primary">Ок</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== Reset & constants ====== */
+const SAVE_KEY = 'elementix-v121'; // новый ключ (глобальный сброс)
+(function hardResetOnce(){
+  try{
+    if(!localStorage.getItem('__elx_v121_wiped__')){
+      Object.keys(localStorage).forEach(k=>{ if(k.startsWith('elementix-')) localStorage.removeItem(k); });
+      localStorage.setItem('__elx_v121_wiped__','1');
+    }
+  }catch{}
+})();
+(function urlReset(){
+  const p = new URLSearchParams(location.search);
+  if(p.get('reset')==='1'){
+    try{ Object.keys(localStorage).forEach(k=>localStorage.removeItem(k)); }catch{}
+  }
+})();
+
+const R = {C:'common', R:'rare', E:'epic'};
+const PRICE = 10;
+
+/* Elements (вместо 100 сейчас демонстрационный набор; твои 100 можно подставить сюда без изменений логики) */
+const BASE = [
+  {id:'fire', n:'Огонь', e:'🔥', r:R.C},
+  {id:'water', n:'Вода', e:'💧', r:R.C},
+  {id:'earth', n:'Земля', e:'🪨', r:R.C},
+  {id:'air', n:'Воздух', e:'💨', r:R.C},
+];
+const EXTRA = {
+  steam:{n:'Пар',e:'♨️',r:R.C}, mud:{n:'Грязь',e:'🟫',r:R.C}, cloud:{n:'Туча',e:'☁️',r:R.C},
+  energy:{n:'Энергия',e:'⚡️',r:R.C}, lava:{n:'Лава',e:'🌋',r:R.C}, dust:{n:'Пыль',e:'🧹',r:R.C},
+  stone:{n:'Камень',e:'🗿',r:R.C}, sand:{n:'Песок',e:'🏖️',r:R.C}, glass:{n:'Стекло',e:'🪟',r:R.C},
+  life:{n:'Жизнь',e:'🧬',r:R.R}, plant:{n:'Растение',e:'🌿',r:R.C}, seed:{n:'Семена',e:'🌱',r:R.C}, flower:{n:'Цветок',e:'🌸',r:R.C}
+};
+const RECIPES = {
+  'fire+water':'steam','earth+water':'mud','air+water':'cloud','fire+air':'energy','fire+earth':'lava','air+earth':'dust',
+  'lava+water':'stone','stone+air':'sand','sand+fire':'glass','energy+mud':'life','plant+air':'seed','life+plant':'flower'
+};
+const ALL = (()=>{const m=new Map(); for(const b of BASE) m.set(b.id,b); for(const [id,meta] of Object.entries(EXTRA)) m.set(id,{id,n:meta.n,e:meta.e,r:meta.r}); return m;})();
+
+/* ====== State ====== */
+const dayKey = ()=>new Date().toISOString().slice(0,10);
+let state = {disc:new Set(BASE.map(x=>x.id)), a:null,b:null, j:[], stars:0, daily:{date:dayKey(), used:false, paid:0}};
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify({d:[...state.disc], a:state.a, b:state.b, j:state.j.slice(0,80), stars:state.stars, daily:state.daily})); }
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const o = JSON.parse(raw);
+      state.disc = new Set(o.d||BASE.map(x=>x.id));
+      state.a=o.a||null; state.b=o.b||null;
+      state.j=Array.isArray(o.j)?o.j:[];
+      state.stars=Number.isFinite(o.stars)?o.stars:0;
+      state.daily=o.daily||state.daily;
+    }
+  }catch{}
+  if(state.daily.date!==dayKey()) state.daily={date:dayKey(), used:false, paid:0};
+}
+
+/* ====== UI helpers ====== */
+const $ = id=>document.getElementById(id);
+const grid=$('grid'), openCount=$('openCount'), totalCount=$('totalCount'),
+      bA=$('bA'), bB=$('bB'), starsEl=$('stars'),
+      mixBtn=$('mix'), clearBtn=$('clear'),
+      hintBtn=$('hint'), hintLabel=$('hintLabel'), hintBadge=$('hintBadge'),
+      modal=$('modal'), mClose=$('mClose'), mAction=$('mAction'), modalTitle=$('modalTitle'), modalBody=$('modalBody'),
+      hdr=$('hdr'), bowls=$('bowls');
+
+const tag = r=>r===R.E?'epic':r===R.R?'rare':'common';
+function cardHTML(id, opened){ const it=ALL.get(id); const t=`<div class="tag ${tag(it.r)}">${it.r===R.E?'Эпический':it.r===R.R?'Редкий':'Обычный'}</div>`; return `<div class="card ${opened?'':'locked'}" data-id="${id}" draggable="${opened}">${t}<div class="emoji">${opened?it.e:'❓'}</div><div class="name">${opened?it.n:'???'}</div></div>`; }
+function renderDex(q=''){
+  q=q.toLowerCase(); grid.innerHTML='';
+  for(const it of [...ALL.values()].filter(i=>i.n.toLowerCase().includes(q))){
+    const opened=state.disc.has(it.id);
+    const div=document.createElement('div'); div.innerHTML=cardHTML(it.id, opened);
+    const card=div.firstChild;
+    if(opened){
+      card.addEventListener('click', ()=>selectByClick(it.id));
+      card.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', it.id); });
+    }
+    grid.appendChild(card);
+  }
+  openCount.textContent=state.disc.size;
+  totalCount.textContent=Math.max(100, ALL.size);
+}
+function bowlBlock(id){ if(!id) return '<div class="hint">Перетащи или кликни карточку</div>'; const it=ALL.get(id); return `<div class="picked"><div class="emoji">${it.e}</div><div class="name">${it.n}</div></div>`; }
+function renderBowls(){ bA.innerHTML=bowlBlock(state.a); bB.innerHTML=bowlBlock(state.b); }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1300); }
+
+/* DnD & clicks */
+[bA,bB].forEach((b,ix)=>{ b.addEventListener('dragover', e=>e.preventDefault()); b.addEventListener('drop', e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(ix===0) state.a=id; else state.b=id; renderBowls(); save(); }); });
+document.addEventListener('click', e=>{ const x=e.target.closest('[data-clear="A"]'); const y=e.target.closest('[data-clear="B"]'); if(x){ state.a=null; renderBowls(); save(); } if(y){ state.b=null; renderBowls(); save(); } });
+function selectByClick(id){ if(!state.a) state.a=id; else if(!state.b) state.b=id; else { state.a=id; state.b=null; } renderBowls(); save(); }
+$('search').addEventListener('input', (()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(()=>renderDex($('search').value),120);} })());
+$('reset').addEventListener('click', ()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); });
+
+/* Mix & Clear */
+mixBtn.addEventListener('click', ()=>{
+  if(!state.a||!state.b){ toast('Нужно 2 элемента'); return; }
+  const out = RECIPES[[state.a,state.b].sort().join('+')];
+  if(!out){ toast('Пустая реакция…'); return; }
+  const wasNew = !state.disc.has(out);
+  state.disc.add(out);
+  state.a=null; state.b=null;
+  renderBowls(); renderDex($('search').value); save();
+  const it=ALL.get(out); toast((wasNew?'Новый: ':'')+it.e+' '+it.n);
+  if(wasNew){ state.j.unshift({id:out,t:Date.now()}); state.j=state.j.slice(0,80); save(); }
+});
+clearBtn.addEventListener('click', ()=>{ state.a=null; state.b=null; renderBowls(); save(); });
+
+/* Header behaviour — compress to tiny strip */
+let lastY=0;
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  const down = y>lastY && y>20;
+  hdr.classList.toggle('compact', down);
+  lastY=y;
+},{passive:true});
+
+/* Bowls focus via IntersectionObserver */
+const io=new IntersectionObserver(([e])=>{ bowls.classList.toggle('focus', e.isIntersecting); }, {threshold:.33});
+io.observe(bowls);
+
+/* Hint + countdown + modal to see remaining time */
+const msToNextDay=()=>{const now=new Date(); const next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,0,0); return next-now; }
+const fmt=ms=>{ const s=Math.max(0,Math.floor(ms/1000)); const h=String(Math.floor(s/3600)).padStart(2,'0'); const m=String(Math.floor(s%3600/60)).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return `${h}:${m}:${ss}`;}
+function reflectHint(){
+  starsEl.textContent=state.stars;
+  if(!state.daily.used){ hintLabel.textContent='Подсказка'; hintBadge.textContent='бесплатно'; hintBadge.classList.remove('gold','timer'); }
+  else if(state.daily.paid>0){ hintLabel.textContent='Ещё подсказка'; hintBadge.textContent='⭐ '+state.daily.paid; hintBadge.classList.add('gold'); hintBadge.classList.remove('timer'); }
+  else { hintLabel.textContent='Купить подсказку'; hintBadge.textContent='⭐ 10'; hintBadge.classList.add('gold'); hintBadge.classList.remove('timer'); }
+}
+function findHint(){ for(const [pair,out] of Object.entries(RECIPES)){ const [x,y]=pair.split('+'); if(state.disc.has(x)&&state.disc.has(y)&&!state.disc.has(out)) return `${ALL.get(x).n} + ${ALL.get(y).n}`; } return null; }
+function useHint(paid){
+  const s=findHint();
+  if(!s){ toast('Похоже, всё открыто из доступного.'); return; }
+  if(paid){
+    if(state.daily.paid<=0){ toast('Нет оплаченных подсказок'); return; }
+    state.daily.paid--;
+  } else {
+    if(state.daily.used){ toast('Бесплатная уже использована'); return; }
+    state.daily.used=true;
+  }
+  save(); toast('Попробуй: '+s); reflectHint();
+}
+hintBtn.addEventListener('click', ()=>{
+  if(!state.daily.used) useHint(false);
+  else if(state.daily.paid>0) useHint(true);
+  else openModal('Купить подсказку', `Цена: <b>⭐ 10</b><br>Баланс: <b>⭐ ${state.stars}</b><br><br><small>Следующая бесплатная через <b id="freeIn">${fmt(msToNextDay())}</b>.</small>`, 'Купить', ()=>{
+    if(state.stars<10){ openModal('Не хватает звёзд', 'Недостаточно звёзд для покупки.', 'Ок'); return; }
+    state.stars-=10; state.daily.paid++; save(); reflectHint(); closeModal(); toast('Куплена подсказка ⭐');
+  });
+});
+/* small live countdown on the badge when waiting */
+setInterval(()=>{
+  if(state.daily.used && state.daily.paid<=0){
+    hintBadge.textContent='через '+fmt(msToNextDay());
+    hintBadge.classList.add('timer');
+  }
+  const el=document.getElementById('freeIn'); if(el) el.textContent=fmt(msToNextDay());
+}, 1000);
+
+/* Modal */
+function openModal(title, body, actionLabel='Закрыть', onAction=null){
+  modalTitle.textContent=title; modalBody.innerHTML=body;
+  mAction.textContent=actionLabel; mAction.style.display=onAction?'inline-block':'none'; mAction.onclick=onAction||null;
+  modal.style.display='block';
+}
+function closeModal(){ modal.style.display='none'; }
+mClose.addEventListener('click', closeModal);
+modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+
+/* Journal (simple modal) */
+openJournal.addEventListener('click', ()=>{
+  const body = state.j.map(rec=>{
+    const it = ALL.get(rec.id); const t=new Date(rec.t).toLocaleString();
+    const name = it?it.n:('Элемент '+rec.id); const emoji = it?it.e:'❓'; const rar = it?it.r:R.C;
+    return `<div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid #17212e;padding:8px 0;animation:fadeIn .25s both"><div style="font-size:22px">${emoji}</div><div><div><b>${name}</b> · <span class="tag ${tag(rar)}">${rar===R.E?'Эпический':rar===R.R?'Редкий':'Обычный'}</span></div><div style="color:var(--muted);font-size:12px">${t}</div></div></div>`;
+  }).join('') || '<div style="color:var(--muted)">Пока пусто.</div>';
+  openModal('Журнал открытий', body);
+});
+
+/* Init */
+(function init(){
+  load(); renderDex(); renderBowls(); reflectHint();
+  // Splash -> App
+  setTimeout(()=>{ try{document.getElementById('splash').remove()}catch{}; try{document.getElementById('app').hidden=false}catch{}; }, 280);
+  // Header compress on first scroll
+  let lastY=0; window.addEventListener('scroll',()=>{ const y=window.scrollY; document.getElementById('hdr').classList.toggle('compact', y>lastY && y>24); lastY=y; }, {passive:true});
+  const io=new IntersectionObserver(([e])=>{ document.getElementById('bowls').classList.toggle('focus', e.isIntersecting); }, {threshold:.33}); io.observe(document.getElementById('bowls'));
+})();
+</script>
+</body>
+</html>
