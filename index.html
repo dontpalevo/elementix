@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Elementix — Mini Alchemy (v1.4.6)</title>
+  <style>
+    :root{ --bg:#0a0a0a; --panel:#111214; --muted:#8b8e98; --text:#e8eaf0;
+      --accent:#8ef; --accent2:#7dffb6; --border:#21242b; --danger:#ff5a6b;
+      --gold:#ffcc00; --btn:#12141a; --hud:#0f1116; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0a0a0a,#0b0f14 120%);color:var(--text);
+      font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
+    .app{max-width:1100px;margin-inline:auto;padding:12px;display:grid;gap:12px}
+    header{display:grid;gap:8px}
+    .topline{display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:36px;height:36px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#78d5ff,transparent 40%),radial-gradient(circle at 70% 70%,#7dffb6,transparent 45%),#14161a;border:1px solid var(--border)}
+    .brand h1{font-size:17px;margin:0}
+    .ver{opacity:.6;font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#0f1116}
+    .hud{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--border);border-radius:14px;background:var(--hud);
+         overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none}
+    .hud::-webkit-scrollbar{display:none}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:#0e1116;font-weight:600}
+    .iconbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:#12141a;color:var(--text);
+      display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .iconbtn:active{transform:translateY(1px)}
+    .icon-label{position:relative;font-size:18px;line-height:1}
+    .icon-label.off::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:var(--danger);
+      transform:rotate(-28deg);box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+    .grid{display:grid;gap:12px}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px}
+    .work{display:grid;gap:10px}
+    .bowls{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+    .bowl{border:1px dashed #2a2f3a;border-radius:14px;min-height:110px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,#0f1320,#10131a)}
+    .bowl .placeholder{color:#b9a3d1;opacity:.9;font-weight:700}
+    .mix-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#12141a;color:var(--text);cursor:pointer}
+    .btn.primary{background:#171c28;border-color:#263045}
+    .cards{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+    .card{border:1px solid var(--border);background:#0e1015;border-radius:14px;padding:10px 80px 10px 10px;cursor:pointer;display:grid;gap:6px;position:relative;min-height:56px}
+    .cardInner{display:flex;align-items:center;gap:8px;min-width:0}
+    .card .emoji{font-size:22px}
+    .card .name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rarity{position:absolute;top:8px;right:8px;font-size:11px;color:#9aa0aa;background:#0a0a0a;border:1px solid var(--border);border-radius:999px;padding:2px 8px;pointer-events:none}
+    .statusline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .shop-note{color:var(--muted);font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="topline">
+        <div class="brand">
+          <div class="logo"></div>
+          <h1>Elementix — мини-алхимия</h1>
+        </div>
+        <span class="ver">v1.4.6</span>
+      </div>
+      <div class="hud">
+        <div class="pill">⭐ <strong id="stars">20</strong></div>
+        <div class="pill"><small>Платные подсказки</small> <strong id="paidCount">0</strong></div>
+        <button id="soundBtn" class="iconbtn" title="Звук"><span id="soundIcon" class="icon-label off">🔊</span></button>
+        <button id="journalBtn" class="iconbtn" title="Журнал">📜</button>
+        <button id="resetBtn" class="iconbtn" title="Сброс">🗑️</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel work">
+        <div class="bowls">
+          <div class="bowl" id="bowlA"><span class="placeholder">Перетащи или кликни элемент</span></div>
+          <div class="bowl" id="bowlB"><span class="placeholder">Перетащи или кликни элемент</span></div>
+        </div>
+        <div class="mix-actions">
+          <button id="mixBtn" class="btn primary">🥣 Смешать</button>
+          <button id="clearBtn" class="btn">🧹 Очистить</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="statusline">
+          <div class="pill">Открыто элементов: <strong id="discCount">0</strong></div>
+          <div style="display:flex; gap:8px; align-items:center">
+            <button id="hintBtn" class="btn primary">💡 Подсказка <small id="hintSub" style="opacity:.7;margin-left:6px"></small></button>
+            <button id="buyHintBtn" class="btn">Купить подсказки ⭐</button>
+          </div>
+        </div>
+        <div style="margin-top:10px" class="cards" id="cards"></div>
+        <p class="shop-note" id="hintNote"></p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ===== DATA =====
+    const ELEMENTS = [
+      { id:'air', name:'Воздух', emoji:'💨', rarity:'common' },
+      { id:'earth', name:'Земля', emoji:'🌱', rarity:'common' },
+      { id:'fire', name:'Огонь', emoji:'🔥', rarity:'common' },
+      { id:'water', name:'Вода', emoji:'💧', rarity:'common' },
+      { id:'steam', name:'Пар', emoji:'♨️', rarity:'common' },
+      { id:'lava', name:'Лава', emoji:'🌋', rarity:'rare' },
+      { id:'mud', name:'Грязь', emoji:'🟫', rarity:'common' },
+      { id:'stone', name:'Камень', emoji:'🪨', rarity:'common' },
+      { id:'energy', name:'Энергия', emoji:'⚡', rarity:'rare' },
+      { id:'metal', name:'Металл', emoji:'⚙️', rarity:'rare' }
+    ];
+    const ELEMENTS_BY_ID = Object.fromEntries(ELEMENTS.map(e=>[e.id,e]));
+    const RECIPES = [
+      { a:'fire', b:'water', result:'steam' },
+      { a:'fire', b:'earth', result:'lava' },
+      { a:'water', b:'earth', result:'mud' },
+      { a:'earth', b:'air', result:'stone' },
+      { a:'fire', b:'air', result:'energy' },
+      { a:'stone', b:'fire', result:'metal' }
+    ];
+    const RECIPE_MAP = new Map(RECIPES.map(r=>[[r.a,r.b].sort().join('|'), r.result]));
+    const BASE = ['air','earth','fire','water'];
+
+    // ===== STATE (bulletproof loader) =====
+    const state = { discovered:new Set(), stars:20, bowlA:null, bowlB:null, soundOn:false, paidHints:0 };
+    (function loadState(){
+      let saved = null;
+      try{ saved = JSON.parse(localStorage.getItem('elementix_state')||'{}'); }catch{ saved = {}; }
+      // Normalize discovered
+      const arr = Array.isArray(saved?.discovered) ? saved.discovered.filter(x=>typeof x==='string') : [];
+      const set = new Set(arr);
+      // Always ensure base
+      BASE.forEach(id=>set.add(id));
+      state.discovered = set;
+      // Other fields
+      if (typeof saved?.stars === 'number') state.stars = saved.stars;
+      if (typeof saved?.paidHints === 'number') state.paidHints = saved.paidHints;
+      state.soundOn = !!saved?.soundOn;
+      persist(); // persist normalized immediately
+    })();
+    function persist(){ localStorage.setItem('elementix_state', JSON.stringify({discovered:[...state.discovered], stars:state.stars, soundOn:state.soundOn, paidHints:state.paidHints})); }
+
+    // ===== REFS =====
+    const cardsEl = document.getElementById('cards');
+    const bowlA = document.getElementById('bowlA'); const bowlB = document.getElementById('bowlB');
+    const mixBtn = document.getElementById('mixBtn'); const clearBtn = document.getElementById('clearBtn');
+    const hintBtn = document.getElementById('hintBtn'); const buyHintBtn = document.getElementById('buyHintBtn');
+    const hintSub = document.getElementById('hintSub'); const hintNote = document.getElementById('hintNote');
+    const starsEl = document.getElementById('stars'); const paidCount = document.getElementById('paidCount');
+    const soundBtn = document.getElementById('soundBtn'); const soundIcon = document.getElementById('soundIcon');
+    const resetBtn = document.getElementById('resetBtn'); const discCountEl = document.getElementById('discCount');
+
+    // ===== UI =====
+    function renderCards(){
+      const items = ELEMENTS.filter(e=>state.discovered.has(e.id));
+      cardsEl.innerHTML = items.map(e=>`<div class="card" data-id="${e.id}" draggable="true">
+        <span class="rarity">${e.rarity==='rare'?'Редкий':'Обычный'}</span>
+        <div class="cardInner"><span class="emoji">${e.emoji}</span><span class="name">${e.name}</span></div>
+      </div>`).join('');
+      document.querySelectorAll('.card').forEach(c=>{
+        c.addEventListener('click',()=>{ const id=c.dataset.id; if(!state.bowlA) state.bowlA=id; else state.bowlB=id; renderBowls(); });
+        c.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/element-id', c.dataset.id)});
+      });
+      discCountEl.textContent = state.discovered.size;
+    }
+    function renderBowls(){
+      bowlA.innerHTML = state.bowlA ? `<div class="chip">${ELEMENTS_BY_ID[state.bowlA].emoji} ${ELEMENTS_BY_ID[state.bowlA].name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+      bowlB.innerHTML = state.bowlB ? `<div class="chip">${ELEMENTS_BY_ID[state.bowlB].emoji} ${ELEMENTS_BY_ID[state.bowlB].name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+    }
+    function updateStars(){ starsEl.textContent = state.stars; persist(); }
+    function updatePaid(){ paidCount.textContent = state.paidHints; persist(); }
+    function updateSoundUI(){ soundIcon.classList.toggle('off', !state.soundOn); persist(); }
+
+    // ===== Hints (short) =====
+    const CD = 12*60*60*1000;
+    function getFreeAt(){ return +(localStorage.getItem('hintFreeAt')||0) }
+    function setFreeAt(ts){ localStorage.setItem('hintFreeAt', String(ts)) }
+    function fmtHMS(ms){ const s=Math.max(0,Math.floor(ms/1000)); const h=Math.floor(s/3600); const m=Math.floor((s%3600)/60); const ss=s%60; const pad=n=>String(n).padStart(2,'0'); return `${pad(h)}:${pad(m)}:${pad(ss)}`;}
+    function updateHintState(){ const left=getFreeAt()-Date.now(); hintSub.textContent = left>0?`через ${fmtHMS(left)}`:'(доступна)'; }
+    function makeHint(){
+      const cand = RECIPES.filter(r=>!state.discovered.has(r.result)&&state.discovered.has(r.a)&&state.discovered.has(r.b));
+      if(!cand.length){ alert('Пока нечего подсказать — попробуй другие сочетания!'); return; }
+      const pick = cand[Math.floor(Math.random()*cand.length)]; const ids=new Set([pick.a,pick.b]);
+      document.querySelectorAll('.card').forEach(c=>c.classList.toggle('hint-glow', ids.has(c.dataset.id)));
+    }
+    hintBtn.addEventListener('click',()=>{
+      const left=getFreeAt()-Date.now();
+      if(left<=0){ setFreeAt(Date.now()+CD); updateHintState(); makeHint(); return; }
+      if(state.paidHints>0){ state.paidHints--; updatePaid(); makeHint(); return; }
+      openShop();
+    });
+
+    // ===== MIX =====
+    mixBtn.addEventListener('click', ()=>{
+      if(!state.bowlA||!state.bowlB){ alert('Нужно 2 элемента'); return;}
+      const key=[state.bowlA,state.bowlB].sort().join('|'); const result=RECIPE_MAP.get(key);
+      if(!result){ alert('Не получилось. Попробуй другое сочетание.'); return; }
+      const wasNew=!state.discovered.has(result); state.discovered.add(result);
+      renderCards(); renderBowls(); persist();
+      alert((wasNew?'Новый элемент: ':'Получилось: ')+ELEMENTS_BY_ID[result].name);
+    });
+    clearBtn.addEventListener('click',()=>{ state.bowlA=state.bowlB=null; renderBowls(); });
+
+    // ===== INIT & RESET =====
+    function init(){ updateStars(); updatePaid(); updateSoundUI(); renderCards(); renderBowls(); updateHintState(); setInterval(updateHintState,1000); }
+    init();
+    soundBtn.addEventListener('click',()=>{ state.soundOn=!state.soundOn; updateSoundUI(); });
+    resetBtn.addEventListener('click',()=>{
+      if(!confirm('Сбросить прогресс до начала (4 базовых элемента)?')) return;
+      localStorage.removeItem('elementix_state'); localStorage.removeItem('hintFreeAt');
+      state.discovered=new Set(BASE); state.stars=0; state.paidHints=0; state.bowlA=state.bowlB=null; state.soundOn=false;
+      persist(); init();
+    });
+  </script>
+</body>
+</html>
