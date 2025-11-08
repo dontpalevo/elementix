@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Elementix — Mini Alchemy (v1.4.2)</title>
+  <style>
+    :root{
+      --bg:#0a0a0a;
+      --panel:#111214;
+      --muted:#8b8e98;
+      --text:#e8eaf0;
+      --accent:#8ef;
+      --accent2:#7dffb6;
+      --border:#21242b;
+      --danger:#ff5a6b;
+      --gold:#ffcc00;
+      --btn:#12141a;
+      --card:#0f1420;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0a0a0a,#0b0f14 120%);
+      color:var(--text);
+      font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Noto Sans', 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+    }
+    .app{max-width:1100px;margin-inline:auto;padding:16px;display:grid;gap:14px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .logo{width:40px;height:40px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#78d5ff,transparent 40%),radial-gradient(circle at 70% 70%,#7dffb6,transparent 45%),#14161a;border:1px solid var(--border);box-shadow:0 10px 40px rgba(0,0,0,.35), inset 0 0 24px rgba(255,255,255,.04)}
+    .brand h1{font-size:18px;margin:0}
+    .ver{opacity:.6;font-size:12px;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#0f1116}
+    /* ===== Compact toolbar ===== */
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:#0f1116;color:var(--text);display:inline-flex;gap:8px;align-items:center;font-size:14px}
+    .iconbtn,.textbtn{
+      height:36px;border-radius:10px;border:1px solid var(--border);
+      background:var(--btn);color:var(--text);display:inline-flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:transform .08s ease, background .2s;padding:0 10px;gap:8px
+    }
+    .iconbtn{width:36px;padding:0}
+    .iconbtn:hover,.textbtn:hover{background:#161b25}
+    .iconbtn:active,.textbtn:active{transform:translateY(1px)}
+    .icon-label{position:relative;display:inline-block;font-size:18px;line-height:1}
+    .icon-label.off::after{
+      content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:var(--danger);
+      transform:rotate(-28deg);transform-origin:center;box-shadow:0 0 0 1px rgba(0,0,0,.2);
+    }
+    .icon-tooltip{display:none;position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);background:#0c1016;border:1px solid var(--border);border-radius:8px;padding:2px 6px;font-size:11px;white-space:nowrap}
+    .iconbtn:hover .icon-tooltip{display:block}
+
+    /* ===== Layout ===== */
+    .grid{display:grid;gap:14px}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
+    .work{display:grid;gap:12px;grid-template-rows:auto auto 1fr}
+    .bowls{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+    .bowl{border:1px dashed #2a2f3a;border-radius:14px;min-height:110px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,#0f1320,#10131a);position:relative;overflow:hidden}
+    .bowl::after{content:"";position:absolute;inset:auto -40% 0 -40%;height:30px;background:radial-gradient(ellipse at center, rgba(125,255,182,.2), transparent 70%);filter:blur(10px)}
+    .bowl .placeholder{color:#b9a3d1;opacity:.9;font-weight:600}
+    .mix-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+    /* ===== Cards ===== */
+    .cards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+    .card{
+      border:1px solid var(--border);background:#0e1015;border-radius:14px;padding:10px 84px 10px 10px;
+      cursor:pointer;display:grid;gap:6px;transition:transform .08s ease, box-shadow .2s, border-color .2s;position:relative;min-height:58px;
+    }
+    .card:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .cardInner{display:flex;align-items:center;gap:8px;min-width:0}
+    .card .emoji{font-size:22px;flex:0 0 auto}
+    .card .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rarity{position:absolute;top:8px;right:8px;font-size:11px;color:#9aa0aa;background:#0a0a0a;border:1px solid var(--border);border-radius:999px;padding:2px 8px;pointer-events:none}
+    .card.hint-glow{outline:2px solid var(--accent2);box-shadow:0 0 14px rgba(125,255,182,.35)}
+
+    .statusline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .shop-note{color:var(--muted);font-size:14px}
+
+    /* Toasts */
+    .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#151923;border:1px solid var(--border);border-radius:12px;padding:10px 14px;z-index:999;box-shadow:0 20px 40px rgba(0,0,0,.35);display:none}
+    .toast.show{display:block;animation:toastIn .2s ease}
+    @keyframes toastIn{from{opacity:0;transform:translate(-50%,-6px)} to{opacity:1;transform:translate(-50%,0)}}
+
+    /* Confetti canvas */
+    #confetti{position:fixed;inset:0;pointer-events:none;z-index: 900;mix-blend-mode:screen}
+
+    /* Fly animation */
+    .fly-ghost{position:fixed;z-index:9999;pointer-events:none;transition:transform .5s cubic-bezier(.2,.7,.2,1), opacity .5s;will-change:transform, opacity}
+
+    /* Modal base */
+    .modal.hidden{display:none}
+    .modal{position:fixed;inset:0;z-index:1000}
+    .modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+    .modal__panel{position:relative;margin:6vh auto;max-width:480px;background:#101216;border:1px solid var(--border);border-radius:16px;padding:14px}
+    .modal__header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .modal__list{display:grid;gap:8px;margin-top:10px}
+    .modal .btnline{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .btn{padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#12141a;color:var(--text);cursor:pointer;transition:transform .08s ease, background .2s;}
+    .btn:hover{background:#151924}
+    .btn:active{transform:translateY(1px)}
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
+    .btn.primary{background:#171c28;border-color:#263045}
+
+    /* Shop grid */
+    .shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px}
+    .shop-card{border:1px solid var(--border);border-radius:12px;background:#0f1116;padding:10px;display:grid;gap:8px}
+    .shop-title{font-weight:700}
+    .shop-price{color:var(--muted);font-size:13px}
+    .shop-ad{display:grid;gap:8px;border:1px dashed #2b2f3a;border-radius:12px;padding:10px;background:#0c1016}
+
+    /* Celebration overlay */
+    .celebrate{position:fixed;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;}
+    .celebrate .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+    .cele-card{position:relative;background:linear-gradient(180deg,#172033,#101729);border:1px solid #2b3550;border-radius:16px;padding:18px 22px;min-width:340px;max-width:92vw;box-shadow:0 30px 80px rgba(0,0,0,.65);transform:scale(.94);opacity:0;animation:popIn .22s ease forwards}
+    .cele-top{display:flex;align-items:center;gap:12px;justify-content:center}
+    .cele-emoji{font-size:46px;filter:drop-shadow(0 6px 16px rgba(255,255,255,.08))}
+    .cele-name{font-weight:900;font-size:22px;letter-spacing:.2px;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+    .cele-ribbon{margin-top:8px;display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #2b883b;background:linear-gradient(180deg,#1a5c2c,#12471f);color:#a6ffb6;font-size:12px}
+    .cele-desc{margin-top:10px;color:#dbe2f4;font-size:14px;text-align:center}
+    .cele-close{position:absolute;top:8px;right:8px;border:1px solid #3a4670;background:#1f2a45;color:#fff;border-radius:10px;padding:6px 9px;cursor:pointer;font-weight:800}
+    .cele-close:hover{background:#27345a}
+    @keyframes popIn{to{transform:scale(1);opacity:1}}
+  
+@media (max-width: 420px){
+  header .actions{ gap:6px; }
+  header, .topbar{ padding:6px 8px; }
+  header .pill, header button, header .toggle { font-size:12px; padding:6px 10px; }
+  header .brand .title{ font-size:14px; }
+  header .row{ display:flex; align-items:center; gap:8px; flex-wrap:nowrap; overflow-x:auto; }
+}
+
+
+.goal-banner{margin:10px auto;max-width:960px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:12px}
+.goal-banner .goal-text{flex:1;font-weight:600}
+.goal-banner .goal-progress{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.goal-banner .goal-fill{height:100%;background:linear-gradient(90deg, rgba(255,215,0,.9), rgba(255,255,255,.9));transition:width .3s ease}
+.goal-banner button{white-space:nowrap}
+@media (max-width:420px){.goal-banner{flex-direction:column;align-items:stretch}}
+
+
+/* --- Global systems UI --- */
+.mega-nav{display:flex;gap:8px;justify-content:center;margin:10px auto;flex-wrap:wrap}
+.tab-btn{border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:999px}
+.tab-btn[aria-pressed="true"]{background:linear-gradient(0deg, rgba(255,255,255,.06), rgba(255,255,255,.02));box-shadow:0 0 0 2px rgba(255,255,255,.08) inset}
+.tab.hidden{display:none}
+.panel{max-width:960px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+.muted{opacity:.8;font-size:.95em}
+.atlas-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.group-card{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(255,255,255,.02)}
+.group-card h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px 0}
+.group-progress{height:10px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+.group-fill{height:100%;background:linear-gradient(90deg, #ffd700, #ffffff)}
+.group-meta{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.group-meta .reward{white-space:nowrap}
+.ach-list,.ch-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.ach-item,.ch-item{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:rgba(255,255,255,.02)}
+.badge{padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:.9em}
+.badge.done{background:rgba(80,200,120,.2);border-color:rgba(80,200,120,.6)}
+.ch-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.streak{display:flex;align-items:center;gap:10px}
+@media (max-width:420px){
+  .atlas-groups{grid-template-columns:1fr}
+}
+
+
+/* === Systems: Lab, Map, Pets, Artifacts, Titles === */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.card{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(255,255,255,.02)}
+.card h3{margin:0 0 6px 0}
+.list{display:grid;gap:8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.small{font-size:.9em;opacity:.85}
+.btn{border:1px solid var(--border);background:var(--card);border-radius:8px;padding:6px 10px;cursor:pointer}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.tag{border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:.85em}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.map .loc{border:1px dashed var(--border);border-radius:12px;padding:10px;opacity:.9}
+.loc.locked{opacity:.5}
+.pet{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:12px;padding:8px}
+.slots{display:flex;gap:6px}
+.slot{width:34px;height:34px;border-radius:8px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center}
+.slot.full{border-style:solid}
+.title-box{display:flex;align-items:center;justify-content:space-between}
+/* biomes background (subtle) */
+body[data-biome="forest"]{background-image:radial-gradient(1200px 400px at 50% -10%,rgba(80,120,80,.15),transparent)}
+body[data-biome="cave"]{background-image:radial-gradient(1200px 400px at 50% -10%,rgba(120,120,150,.15),transparent)}
+body[data-biome="city"]{background-image:radial-gradient(1200px 400px at 50% -10%,rgba(120,120,120,.15),transparent)}
+body[data-biome="space"]{background-image:radial-gradient(1200px 400px at 50% -10%,rgba(80,80,120,.15),transparent)}
+
+
+/* --- Nav contrast & focus --- */
+.mega-nav{position:sticky; top:0; z-index:50; background:linear-gradient(0deg, rgba(0,0,0,.25), rgba(0,0,0,.35)); backdrop-filter:saturate(120%) blur(6px); border-bottom:1px solid var(--border); padding:8px 10px; border-radius:0 0 12px 12px}
+.tab-btn{outline:none; transition:transform .06s ease, box-shadow .06s ease}
+.tab-btn:hover{transform:translateY(-1px)}
+.tab-btn:active{transform:translateY(0)}
+.tab-btn:focus-visible{box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+
+
+/* click safety */
+#confetti{pointer-events:none}
+.modal__backdrop{pointer-events:auto}
+
+
+/* Active state visual */
+.tab-btn[aria-pressed="true"]{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.35);}
+
+</style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Elementix — мини-алхимия</h1>
+        <span class="ver">v1.4.2</span>
+      </div>
+      <div class="toolbar">
+        <div class="pill">⭐ <strong id="stars">20</strong></div>
+        <div class="pill">Платные подсказки: <strong id="paidCount">0</strong></div>
+        <button id="soundBtn" class="iconbtn" title="Звук">
+          <span id="soundIcon" class="icon-label off">🔊</span>
+          <span class="icon-tooltip">Звук</span>
+        </button>
+        <button id="journalBtn" class="iconbtn" title="Журнал">
+          <span class="icon-label">📜</span>
+          <span class="icon-tooltip">Журнал</span>
+        </button>
+        <button id="resetBtn" class="textbtn" title="Сброс прогресса"><span>🗑️</span><span>Сброс</span></button>
+      </div>
+    </header>
+<nav class="mega-nav" role="tablist">
+  <button class="tab-btn" role="tab"  data-tab="game" data-target="tab-game" aria-pressed="true">Игра</button>
+  <button class="tab-btn" role="tab"  data-tab="atlas" data-target="tab-atlas">Атлас</button>
+  <button class="tab-btn" role="tab"  data-tab="achievements" data-target="tab-achievements">Достижения</button>
+  <button class="tab-btn" role="tab"  data-tab="challenges" data-target="tab-challenges">Испытания</button>
+  <button class="tab-btn" role="tab"  data-tab="lab" data-target="tab-lab">Лаборатория</button>
+  <button class="tab-btn" role="tab"  data-tab="map" data-target="tab-map">Карта</button>
+  <button class="tab-btn" role="tab"  data-tab="pets" data-target="tab-pets">Питомцы</button>
+  <button class="tab-btn" role="tab"  data-tab="artifacts" data-target="tab-artifacts">Артефакты</button>
+  <button class="tab-btn" role="tab"  data-tab="titles" data-target="tab-titles">Титулы</button>
+</nav>
+
+    <div id="goal-banner" class="goal-banner" style="display:none;">
+      <div class="goal-text">Цель дня: открой 3 новых элемента — получи <span class="star">⭐5</span></div>
+      <div class="goal-progress"><div class="goal-fill" style="width:0%"></div></div>
+      <button id="goal-claim" disabled>Забрать награду</button>
+    </div>
+    
+
+    <div class="grid">
+      <!-- WORK PANEL ON TOP -->
+      <section class="panel work">
+        <div class="bowls">
+          <div class="bowl" id="bowlA"><span class="placeholder">Перетащи или кликни элемент</span></div>
+          <div class="bowl" id="bowlB"><span class="placeholder">Перетащи или кликни элемент</span></div>
+        </div>
+        <div class="mix-actions">
+          <button id="mixBtn" class="btn primary">🥣 Смешать</button>
+          <button id="clearBtn" class="btn">🧹 Очистить</button>
+        </div>
+        <div id="resultArea"></div>
+      </section>
+
+      <!-- ELEMENTS PANEL BELOW -->
+      <section class="panel">
+        <div class="statusline">
+          <div class="pill">Открыто элементов: <strong id="discCount">0</strong></div>
+          <div style="display:flex; gap:10px; align-items:center">
+            <button id="hintBtn" class="btn primary" title="Подсказка">
+              💡 Подсказка <small id="hintSub" style="color:var(--muted); margin-left:6px"></small>
+            </button>
+            <button id="buyHintBtn" class="btn" title="Купить подсказки">
+              Купить подсказки
+            </button>
+          </div>
+        </div>
+        <div style="margin-top:10px" class="cards" id="cards"></div>
+        <p class="shop-note" id="hintNote"></p>
+      </section>
+    </div>
+  </div>
+
+  <!-- Journal Modal -->
+  <div id="journalModal" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel">
+      <div class="modal__header">
+        <h3>Журнал рецептов</h3>
+        <button class="btn" id="journalClose">✕</button>
+      </div>
+      <div style="margin-top:8px">
+        <input id="jl-search" type="text" placeholder="Поиск: элемент или результат..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#0b0d12;color:#fff"/>
+        <label style="display:inline-flex;gap:8px;align-items:center;margin-top:8px"><input id="jl-unique" type="checkbox" checked /> Только впервые открытые</label>
+      </div>
+      <div id="jl-list" class="modal__list"></div>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div id="shopModal" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel">
+      <div class="modal__header">
+        <h3>Магазин</h3>
+        <button class="btn" id="shopClose">✕</button>
+      </div>
+      <div class="modal__list">
+        <div class="pill">Баланс: ⭐ <strong id="shopStars">0</strong></div>
+        <div class="shop-grid">
+          <div class="shop-card">
+            <div class="shop-title">Пакет ⭐20</div>
+            <div class="shop-price">Мгновенно добавит 20 звёзд</div>
+            <button class="btn primary" data-pack="20">Купить ⭐20</button>
+          </div>
+          <div class="shop-card">
+            <div class="shop-title">Пакет ⭐50</div>
+            <div class="shop-price">Лучшее соотношение</div>
+            <button class="btn primary" data-pack="50">Купить ⭐50</button>
+          </div>
+          <div class="shop-card">
+            <div class="shop-title">Пакет ⭐120</div>
+            <div class="shop-price">Максимум выгоды</div>
+            <button class="btn primary" data-pack="120">Купить ⭐120</button>
+          </div>
+          <div class="shop-ad">
+            <div class="shop-title">🎬 Посмотреть рекламу</div>
+            <div class="shop-price">+5 звёзд после просмотра</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn" id="watchAdBtn">Смотреть</button>
+              <progress id="adProgress" value="0" max="100" style="flex:1;height:10px"></progress>
+            </div>
+          </div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:8px 0">
+        <div class="shop-title">Купить подсказки за ⭐10/шт</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="hintQty" type="number" min="0" value="1" style="width:100px;padding:8px;border:1px solid var(--border);border-radius:10px;background:#0b0d12;color:#fff">
+          <div id="hintCost" class="shop-price">Стоимость: ⭐10</div>
+          <button id="buyQtyHints" class="btn">Купить</button>
+        </div>
+        <p class="shop-note" id="shopNote" style="margin-top:8px"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------------------- DATA ----------------------
+    const ELEMENTS = [
+      { id:'air',    name:'Воздух', emoji:'💨', rarity:'common', fact:'В каждом вдохе есть молекулы воздуха, которые видели динозавров.' },
+      { id:'earth',  name:'Земля',  emoji:'🌱', rarity:'common', fact:'В одной чайной ложке почвы могут жить миллиарды микроорганизмов.' },
+      { id:'fire',   name:'Огонь',  emoji:'🔥', rarity:'common', fact:'Пламя невесомо — форму ему придаёт движение горячего газа.' },
+      { id:'water',  name:'Вода',   emoji:'💧', rarity:'common', fact:'Горячая вода иногда замерзает быстрее холодной (эффект Мпембы).' },
+      { id:'steam',  name:'Пар',    emoji:'♨️', rarity:'common', fact:'Невидимый перегретый пар опаснее видимого тумана из капель.' },
+      { id:'lava',   name:'Лава',   emoji:'🌋', rarity:'rare',   fact:'Базальтовая лава может течь быстрее бегущего человека.' },
+      { id:'mud',    name:'Грязь',  emoji:'🟫', rarity:'common', fact:'Грязевые вулканы извергают газ и жидкую грязь, а не магму.' },
+      { id:'stone',  name:'Камень', emoji:'🪨', rarity:'common', fact:'Камни формируются тремя путями: магматически, осадочно и метаморфически.' },
+      { id:'energy', name:'Энергия',emoji:'⚡', rarity:'rare',   fact:'Молния нагревает воздух до ~30 000 °C — горячее поверхности Солнца.' },
+      { id:'metal',  name:'Металл', emoji:'⚙️', rarity:'rare',   fact:'Железо — самое распространённое вещество в ядре Земли.' }
+    ];
+    const ELEMENTS_BY_ID = Object.fromEntries(ELEMENTS.map(e=>[e.id,e]));
+
+    const RECIPES = [
+      { a:'fire', b:'water', result:'steam' },
+      { a:'fire', b:'earth', result:'lava' },
+      { a:'water', b:'earth', result:'mud' },
+      { a:'earth', b:'air', result:'stone' },
+      { a:'fire', b:'air', result:'energy' },
+      { a:'stone', b:'fire', result:'metal' }
+    ,
+      { a:'earth', b:'water', result:'clay' },
+      { a:'clay', b:'fire', result:'brick' },
+      { a:'water', b:'metal', result:'rust' },
+      { a:'air', b:'water', result:'mist' },
+      { a:'air', b:'fire', result:'energy' },
+      { a:'water', b:'fire', result:'steam' },
+      { a:'air', b:'earth', result:'dust' },
+      { a:'dust', b:'fire', result:'ash' },
+      { a:'stone', b:'pressure', result:'gem' },
+      { a:'stone', b:'water', result:'sand' },
+      { a:'sand', b:'fire', result:'glass' },
+      { a:'earth', b:'life', result:'plant' },
+      { a:'plant', b:'fire', result:'tobacco' },
+      { a:'plant', b:'water', result:'algae' },
+      { a:'plant', b:'earth', result:'tree' },
+      { a:'tree', b:'tool', result:'paper' },
+      { a:'metal', b:'fire', result:'steel' },
+      { a:'steel', b:'tool', result:'sword' },
+      { a:'water', b:'cold', result:'ice' },
+      { a:'air', b:'cold', result:'snow' },
+      { a:'energy', b:'metal', result:'electricity' },
+      { a:'electricity', b:'sand', result:'silicon' },
+      { a:'silicon', b:'metal', result:'chip' },
+      { a:'fire', b:'gunpowder', result:'explosion' },
+      { a:'earth', b:'pressure', result:'coal' },
+      { a:'coal', b:'fire', result:'smoke' }
+    ];
+
+    // ---------------------- STATE ----------------------
+    const state = { discovered:new Set(), stars: 20, bowlA:null, bowlB:null, soundOn:false, paidHints:0 };
+    try { const saved = JSON.parse(localStorage.getItem('elementix_state')||'{}'); if (saved.discovered) state.discovered = new Set(saved.discovered); if (typeof saved.stars==='number') state.stars = saved.stars; if ('soundOn' in saved) state.soundOn = !!saved.soundOn; if (typeof saved.paidHints==='number') state.paidHints = saved.paidHints; } catch(e){}
+    ['air','earth','fire','water'].forEach(id=>state.discovered.add(id));
+    function persist(){ localStorage.setItem('elementix_state', JSON.stringify({discovered:[...state.discovered], stars: state.stars, soundOn: state.soundOn, paidHints: state.paidHints})); }
+
+    // ---------------------- UI REFS ----------------------
+    const cardsEl = document.getElementById('cards');
+    const bowlA = document.getElementById('bowlA');
+    const bowlB = document.getElementById('bowlB');
+    const mixBtn = document.getElementById('mixBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const buyHintBtn = document.getElementById('buyHintBtn');
+    const hintSub = document.getElementById('hintSub');
+    const hintNote = document.getElementById('hintNote');
+    const toastEl = document.getElementById('toast');
+    const starsEl = document.getElementById('stars');
+    const paidCount = document.getElementById('paidCount');
+    const soundBtn = document.getElementById('soundBtn');
+    const soundIcon = document.getElementById('soundIcon');
+    const resetBtn = document.getElementById('resetBtn');
+    const discCountEl = document.getElementById('discCount');
+
+    // Shop refs
+    const shopModal = document.getElementById('shopModal');
+    const shopClose = document.getElementById('shopClose');
+    const shopStars = document.getElementById('shopStars');
+    const shopNote = document.getElementById('shopNote');
+    const watchAdBtn = document.getElementById('watchAdBtn');
+    const adProgress = document.getElementById('adProgress');
+    const hintQty = document.getElementById('hintQty');
+    const hintCost = document.getElementById('hintCost');
+    const buyQtyHints = document.getElementById('buyQtyHints');
+
+    // ---------------------- UTIL ----------------------
+    function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 1500); }
+    function fmtHMS(ms){ const s=Math.max(0,Math.floor(ms/1000)); const h=Math.floor(s/3600); const m=Math.floor((s%3600)/60); const ss=s%60; const pad=n=>String(n).padStart(2,'0'); return `${pad(h)}:${pad(m)}:${pad(ss)}`; }
+    function playClick(){ if (!state.soundOn) return; new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAAAAACAgICAgA==').play().catch(()=>{}); }
+
+    // Bright Confetti
+    (function(){
+      const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d');
+      let W=canvas.width=window.innerWidth, H=canvas.height=window.innerHeight;
+      window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;});
+      let parts=[]; let running=false; let emitter=null;
+      const colors = ['#ffd400','#ff6b6b','#4dd599','#4da3ff','#b36bff','#ffffff'];
+      function addBurst(n,x,y){ for(let i=0;i<n;i++){ const ang=Math.random()*Math.PI*2; const sp=2+Math.random()*4; const shape=Math.random()<0.5?'c':'s'; parts.push({x:x,y:y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp-3,g:0.08+Math.random()*0.08,r:2+Math.random()*4,life:110+Math.random()*70,color:colors[(Math.random()*colors.length)|0],shape}); } if(!running){ running=true; requestAnimationFrame(loop);} }
+      function drawPart(p){ ctx.globalAlpha=Math.max(0,Math.min(1,p.life/120)); ctx.fillStyle=p.color; if(p.shape==='c'){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); } else { ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.x*0.05); ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2); ctx.restore(); } }
+      function loop(){ ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='screen'; parts.forEach(p=>{ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.life--; drawPart(p); }); parts=parts.filter(p=>p.life>0 && p.y<H+30); if(parts.length>0 || emitter){ requestAnimationFrame(loop);} else { running=false; ctx.clearRect(0,0,W,H);} }
+      window.runCelebration = function(x,y){ emitter = setInterval(()=>addBurst(30, x||W/2, y||H*0.35), 120); setTimeout(()=>{ clearInterval(emitter); emitter=null; }, 4000); if(!running){ running=true; requestAnimationFrame(loop); } };
+    window.stopCelebration = function(){
+      try{
+        if (typeof emitter !== 'undefined' && emitter) { clearInterval(emitter); emitter = null; }
+        if (typeof parts !== 'undefined') { parts.length = 0; }
+        if (typeof ctx !== 'undefined' && typeof W !== 'undefined' && typeof H !== 'undefined') { ctx.clearRect(0,0,W,H); }
+        if (typeof running !== 'undefined') { running = false; }
+      }catch(e){}
+    };
+    
+    })();
+
+    // Celebration overlay (manual close)
+    function showCelebrate(element, isNew){
+    try{ if (typeof isNew !== 'undefined' && isNew && window.__goalAdd) window.__goalAdd(); }catch(e){} 
+    
+      const wrap = document.createElement('div');
+      wrap.className = 'celebrate';
+      wrap.innerHTML = `
+        <div class="modal__backdrop backdrop"></div>
+        <div class="cele-card">
+          <button class="cele-close" aria-label="Закрыть">×</button>
+          <div class="cele-top">
+            <div class="cele-emoji">${element.emoji}</div>
+            <div class="cele-name">${element.name}</div>
+          </div>
+          ${isNew ? '<div class="cele-ribbon">Новый элемент!</div>' : ''}
+          <div class="cele-desc">Редкость: <b>${element.rarity==='rare'?'Редкий':'Обычный'}</b><br>${element.fact||''}</div>
+        </div>`;
+      document.body.appendChild(wrap);
+      const card = wrap.querySelector('.cele-card'); const rect = card.getBoundingClientRect();
+      runCelebration(rect.left+rect.width/2, rect.top+rect.height/2);
+      const close = ()=> wrap.remove();
+      wrap.querySelector('.cele-close').addEventListener('click', close);
+      wrap.querySelector('.backdrop').addEventListener('click', close);
+    }
+
+    // ---------------------- RENDER ----------------------
+    function cardHTML(e){ return `<div class="card" data-id="${e.id}" title="${e.name}" draggable="true">
+      <span class="rarity">${e.rarity==='rare'?'Редкий':e.rarity==='epic'?'Эпический':'Обычный'}</span>
+      <div class="cardInner"><span class="emoji">${e.emoji}</span><span class="name">${e.name}</span></div>
+    </div>`; }
+
+    function renderCards(){ const items = ELEMENTS.filter(e=>state.discovered.has(e.id)); cardsEl.innerHTML = items.map(cardHTML).join('');
+      document.querySelectorAll('.card').forEach(c=>{ c.addEventListener('click', ()=>{ const targetBowl = (!state.bowlA ? bowlA : bowlB); animateFlyCard(c, targetBowl); pickToBowl(c.dataset.id); playClick(); });
+        c.addEventListener('dragstart', (ev)=>{ ev.dataTransfer.setData('text/element-id', c.dataset.id); window.__dragSourceEl = c; });
+      }); discCountEl.textContent = state.discovered.size; }
+
+    function renderBowls(){ const A = state.bowlA ? ELEMENTS_BY_ID[state.bowlA] : null; const B = state.bowlB ? ELEMENTS_BY_ID[state.bowlB] : null;
+      bowlA.innerHTML = A ? `<div class="chip">${A.emoji} ${A.name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+      bowlB.innerHTML = B ? `<div class="chip">${B.emoji} ${B.name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`; }
+
+    function updateStars(){ starsEl.textContent = state.stars; shopStars.textContent = state.stars; persist(); }
+    
+function addStars(n){ try{ state.stars = Math.max(0, (state.stars||0) + (n||0)); updateStars(); showToast && showToast('⭐ +' + n, 'success'); }catch(e){} }
+function spendStars(n){ n = Math.max(0,n|0); if ((state.stars||0) >= n){ state.stars -= n; updateStars(); return true; } showToast && showToast('Недостаточно ⭐', 'error'); return false; }
+function updatePaid(){ paidCount.textContent = state.paidHints; persist(); }
+    function updateSoundUI(){ soundIcon.classList.toggle('off', !state.soundOn); persist(); }
+
+    // ---------------------- HINTS ----------------------
+    const HINT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+    function getFreeAt(){ const v = localStorage.getItem('hintFreeAt'); return v ? +v : 0; }
+    function setFreeAt(ts){ localStorage.setItem('hintFreeAt', String(ts)); }
+    function updateHintState(){ const left = getFreeAt() - Date.now(); if (left>0){ hintSub.textContent = `через ${fmtHMS(left)}`; hintNote.textContent = `Бесплатная подсказка будет через ${fmtHMS(left)}.`; } else { hintSub.textContent = '(доступна)'; hintNote.textContent = 'Бесплатная подсказка доступна. Если занята — можно использовать платную.'; } }
+    function clearHintGlow(){ document.querySelectorAll('.card.hint-glow').forEach(n=>n.classList.remove('hint-glow')); }
+    function makeHint(){ clearHintGlow(); const candidates = RECIPES.filter(r=>!state.discovered.has(r.result) && state.discovered.has(r.a) && state.discovered.has(r.b)); if (candidates.length===0){ toast('Пока нечего подсказать — попробуй другие сочетания!'); return; } const pick = candidates[Math.floor(Math.random()*candidates.length)]; const ids = new Set([pick.a, pick.b]); document.querySelectorAll('.card').forEach(c=>{ if (ids.has(c.dataset.id)) c.classList.add('hint-glow'); }); toast('Подсветили 2 элемента — смешай их.'); }
+
+    hintBtn.addEventListener('click', ()=>{
+      const left = getFreeAt() - Date.now();
+      if (left<=0){ setFreeAt(Date.now()+HINT_COOLDOWN_MS); updateHintState(); makeHint(); return; }
+      if (state.paidHints>0){ state.paidHints--; updatePaid(); makeHint(); return; }
+      // иначе предложим купить
+      openShop();
+      shopNote.textContent = 'Свободной подсказки нет. Можно купить платные.';
+    });
+
+    // Shop open/close
+    buyHintBtn.addEventListener('click', openShop);
+    function openShop(){ shopStars.textContent = state.stars; shopNote.textContent = ''; shopModal.classList.remove('hidden'); shopModal.setAttribute('aria-hidden','false'); // init qty
+      const max = Math.floor(state.stars/10); hintQty.min = 0; hintQty.max = Math.max(0,max); hintQty.value = Math.min(1, max); updateHintCost(); updateBuyBtn(); }
+    function closeShop(){ shopModal.classList.add('hidden'); shopModal.setAttribute('aria-hidden','true'); }
+    shopClose.addEventListener('click', closeShop);
+    shopModal.querySelector('.modal__backdrop').addEventListener('click', closeShop);
+    function updateHintCost(){ const q = parseInt(hintQty.value||'0',10); hintCost.textContent = 'Стоимость: ⭐' + (q*10); }
+    function updateBuyBtn(){ const q = parseInt(hintQty.value||'0',10); buyQtyHints.disabled = q<=0 || state.stars<q*10; }
+    hintQty.addEventListener('input', ()=>{ updateHintCost(); updateBuyBtn(); });
+
+    buyQtyHints.addEventListener('click', ()=>{
+      const q = parseInt(hintQty.value||'0',10);
+      const cost = q*10;
+      if (q<=0 || state.stars < cost){ shopNote.textContent = 'Недостаточно ⭐ или неверное количество'; return; }
+      state.stars -= cost; state.paidHints += q; updateStars(); updatePaid(); toast(`Куплено подсказок: ${q}`); closeShop();
+    });
+
+    // Shop packs
+    document.querySelectorAll('[data-pack]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const add = parseInt(btn.getAttribute('data-pack'),10) || 0;
+        state.stars += add; updateStars(); toast(`+${add} ⭐`);
+      });
+    });
+
+    // Watch ad
+    let adBusy = false;
+    watchAdBtn.addEventListener('click', ()=>{
+      if (adBusy) return;
+      adBusy = true; adProgress.value = 0; watchAdBtn.disabled = true;
+      const start = performance.now(); const DUR = 5000;
+      function step(ts){
+        const p = Math.min(1, (ts - start)/DUR);
+        adProgress.value = p*100;
+        if (p < 1) requestAnimationFrame(step);
+        else{
+          state.stars += 5; updateStars(); toast('+5 ⭐ за просмотр'); watchAdBtn.disabled = false; adBusy = false; setTimeout(()=>adProgress.value=0, 800);
+        }
+      }
+      requestAnimationFrame(step);
+    });
+
+    // ---------------------- DnD ----------------------
+    ;[bowlA, bowlB].forEach((bowl, idx)=>{
+      bowl.addEventListener('dragover', ev=>ev.preventDefault());
+      bowl.addEventListener('drop', ev=>{
+        ev.preventDefault();
+        const id = ev.dataTransfer.getData('text/element-id');
+        if (!id) return;
+        if (window.__dragSourceEl) animateFlyCard(window.__dragSourceEl, bowl);
+        if (idx===0) state.bowlA = id; else state.bowlB = id;
+        renderBowls();
+      });
+    });
+    function pickToBowl(id){ if (!state.bowlA) state.bowlA = id; else state.bowlB = id; renderBowls(); }
+
+    // ---------------------- Mixing ----------------------
+    function keyFor(a,b){ return a<b ? a+'|'+b : b+'|'+a; }
+    const RECIPE_MAP = new Map(); RECIPES.forEach(r=>RECIPE_MAP.set(keyFor(r.a,r.b), r.result));
+    function doMix(){ clearHintGlow(); const a = state.bowlA, b = state.bowlB; if (!a || !b){ toast('Нужно 2 элемента'); return; } const result = RECIPE_MAP.get(keyFor(a,b)); if (!result){ toast('Не получилось. Попробуй другое сочетание.'); craftLog.unshift({ t:Date.now(), a, b, result:null }); if (craftLog.length>500) craftLog.pop(); saveCraftLog(); return; } const wasNew = !state.discovered.has(result); state.discovered.add(result); persist(); renderCards(); craftLog.unshift({ t:Date.now(), a, b, result }); if (craftLog.length>500) craftLog.pop(); saveCraftLog(); const R = ELEMENTS_BY_ID[result]; showCelebrate(R, wasNew); state.bowlA = state.bowlB = null; renderBowls(); updateStars(); }
+    mixBtn.addEventListener('click', doMix);
+    clearBtn.addEventListener('click', ()=>{ state.bowlA = state.bowlB = null; renderBowls(); });
+
+    // ---------------------- Fly animation ----------------------
+    function animateFlyCard(sourceEl, targetEl) { if (!sourceEl || !targetEl) return; const s = sourceEl.getBoundingClientRect(); const t = targetEl.getBoundingClientRect(); const ghost = sourceEl.cloneNode(true); ghost.classList.add('fly-ghost'); ghost.style.left = s.left + 'px'; ghost.style.top = s.top + 'px'; ghost.style.width = s.width + 'px'; ghost.style.height = s.height + 'px'; ghost.style.transform = 'translate3d(0,0,0)'; ghost.style.opacity = '1'; document.body.appendChild(ghost); const dx = (t.left + t.width / 2) - (s.left + s.width / 2); const dy = (t.top + t.height / 2) - (s.top + s.height / 2); requestAnimationFrame(() => { ghost.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(.4)`; ghost.style.opacity = '0.16'; }); setTimeout(() => ghost.remove(), 520); }
+
+    // ---------------------- Journal ----------------------
+    let craftLog = []; try { craftLog = JSON.parse(localStorage.getItem('craftLog')||'[]'); } catch(_) {}
+    function saveCraftLog(){ localStorage.setItem('craftLog', JSON.stringify(craftLog)); }
+    function getElementByIdSafe(id){ return ELEMENTS_BY_ID[id] || {id, name:'#'+id, emoji:'❓'}; }
+    function fmtDate(ts){ return new Date(ts).toLocaleString(undefined, {hour12:false}); }
+    const journalModal = document.getElementById('journalModal');
+    const journalClose = document.getElementById('journalClose');
+    const jlSearch = document.getElementById('jl-search');
+    const jlUnique = document.getElementById('jl-unique');
+    const jlList = document.getElementById('jl-list');
+    document.getElementById('journalBtn').addEventListener('click', openJournal);
+    journalClose.addEventListener('click', closeJournal);
+    journalModal.querySelector('.modal__backdrop').addEventListener('click', closeJournal);
+    function openJournal(){ journalModal.classList.remove('hidden'); journalModal.setAttribute('aria-hidden','false'); renderJournal(); jlSearch.oninput = renderJournal; jlUnique.onchange = renderJournal; }
+    function closeJournal(){ journalModal.classList.add('hidden'); journalModal.setAttribute('aria-hidden','true'); }
+    function renderJournal(){ const q=(jlSearch.value||'').trim().toLowerCase(); const onlyUnique = jlUnique.checked; const seen=new Set(); const rows=[]; for (const item of craftLog){ const A=item.a && getElementByIdSafe(item.a); const B=item.b && getElementByIdSafe(item.b); const R=item.result && getElementByIdSafe(item.result); if (onlyUnique){ const key=item.result || ('fail:'+item.a+'|'+item.b); if (seen.has(key)) continue; seen.add(key);} const hay=((A?.name||'')+' '+(B?.name||'')+' '+(R?.name||'')).toLowerCase(); if (q && !hay.includes(q)) continue; rows.push(`<div class="jl-item"><div class="jl-row jl-dot">${fmtDate(item.t)}</div><div class="jl-row"><span class="chip">${A?.emoji||''} ${A?.name||'?'}</span><span>＋</span><span class="chip">${B?.emoji||''} ${B?.name||'?'}</span><span>⟶</span>${R ? `<span class="chip"><strong>${R.emoji} ${R.name}</strong></span>` : `<span class="chip" style="opacity:.7">неудача</span>`}</div></div>`); } jlList.innerHTML = rows.length ? rows.join('') : '<div class="jl-item">Пока пусто.</div>'; }
+
+    // ---------------------- INIT & SOUND & RESET ----------------------
+    function init(){ updateHintState(); setInterval(updateHintState, 1000); updateStars(); updatePaid(); updateSoundUI(); renderCards(); renderBowls(); }
+    init();
+    soundBtn.addEventListener('click', ()=>{ state.soundOn = !state.soundOn; updateSoundUI(); if (state.soundOn) playClick(); });
+
+    resetBtn.addEventListener('click', ()=>{
+      if (!confirm('Сбросить прогресс до начала (4 базовых элемента)?')) return;
+      localStorage.removeItem('elementix_state');
+      localStorage.removeItem('craftLog');
+      localStorage.removeItem('hintFreeAt');
+      state.discovered = new Set(['air','earth','fire','water']);
+      state.bowlA = state.bowlB = null;
+      state.stars = 0;
+      state.paidHints = 0;
+      state.soundOn = false;
+      persist();
+      renderCards();
+      renderBowls();
+      updateStars();
+      updatePaid();
+      updateSoundUI();
+      toast('Прогресс сброшен');
+      setTimeout(()=>location.reload(), 200);
+    });
+  
+// --- Daily goal: open 3 new elements -> reward 5 stars
+(function(){
+  const KEY = 'dailyGoal';
+  const KEY_DATE = 'dailyGoalDate';
+  const today = new Date(); const dkey = today.toISOString().slice(0,10);
+  const savedDate = localStorage.getItem(KEY_DATE);
+  if (savedDate !== dkey){ localStorage.setItem(KEY_DATE, dkey); localStorage.setItem(KEY, JSON.stringify({count:0, claimed:false})); }
+  const state = JSON.parse(localStorage.getItem(KEY) || '{"count":0,"claimed":false}');
+  const banner = document.getElementById('goal-banner');
+  const fill = banner?.querySelector('.goal-fill');
+  const btn = document.getElementById('goal-claim');
+
+  function upd(){
+    if (!banner) return;
+    banner.style.display = 'flex';
+    const pct = Math.min(100, (state.count/3)*100);
+    if (fill) fill.style.width = pct + '%';
+    btn.disabled = !(state.count>=3 && !state.claimed);
+    btn.textContent = state.claimed ? 'Награда получена' : (state.count>=3 ? 'Забрать награду' : `Открой ещё ${3 - Math.min(3,state.count)}`);
+  }
+  btn?.addEventListener('click', ()=>{
+    if (state.count>=3 && !state.claimed){
+      state.claimed = true;
+      try{ window.addStars ? window.addStars(5) : null; }catch(e){}
+      localStorage.setItem(KEY, JSON.stringify(state));
+      upd();
+      try{ window.showToast && showToast('Награда: ⭐5', 'success'); }catch(e){}
+    }
+  });
+  window.__goalAdd = function(){
+    if (state.claimed) return;
+    state.count = Math.min(3, state.count+1);
+    localStorage.setItem(KEY, JSON.stringify(state));
+    upd();
+  };
+  document.addEventListener('DOMContentLoaded', upd);
+})();
+
+</script>
+
+<section id="tab-atlas" class="tab hidden">
+  <div class="panel">
+    <h2>Атлас элементов</h2>
+    <p class="muted">Собери все элементы каждой редкости, чтобы забрать награду.</p>
+    <div id="atlas-groups" class="atlas-groups"></div>
+  </div>
+</section>
+
+<section id="tab-achievements" class="tab hidden">
+  <div class="panel">
+    <h2>Достижения</h2>
+    <ul id="achievements-list" class="ach-list"></ul>
+  </div>
+</section>
+
+<section id="tab-challenges" class="tab hidden">
+  <div class="panel">
+    <h2>Еженедельные испытания</h2>
+    <p class="muted">Каждую неделю — новые задания. Выполни всё и получи <strong>⭐15</strong>.</p>
+    <ul id="challenges-list" class="ch-list"></ul>
+    <div class="ch-footer">
+      <span id="ch-timer" class="muted"></span>
+      <button id="ch-claim" disabled>Забрать награду недели</button>
+    </div>
+    <hr/>
+    <h3>Ежедневный вход</h3>
+    <p class="muted">Поддерживай серию и получай всё больше ⭐.</p>
+    <div class="streak">
+      <button id="streak-claim">Ежедневный бонус</button>
+      <span id="streak-info" class="muted"></span>
+    </div>
+  </div>
+</section>
+
+
+<section id="tab-lab" class="tab hidden">
+  <div class="panel">
+    <h2>Лаборатория</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Улучшения</h3>
+        <div id="lab-list" class="list"></div>
+      </div>
+      <div class="card">
+        <h3>Эффекты</h3>
+        <div class="small" id="lab-effects">—</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-map" class="tab hidden">
+  <div class="panel">
+    <h2>Карта мира</h2>
+    <div id="map" class="map"></div>
+  </div>
+</section>
+
+<section id="tab-pets" class="tab hidden">
+  <div class="panel">
+    <h2>Питомцы</h2>
+    <div id="pets" class="list"></div>
+  </div>
+</section>
+
+<section id="tab-artifacts" class="tab hidden">
+  <div class="panel">
+    <h2>Артефакты</h2>
+    <div class="row small"><span>Активные слоты:</span><div class="slots"><div class="slot" id="slot-1"></div><div class="slot" id="slot-2"></div><div class="slot" id="slot-3"></div></div></div>
+    <div id="artifacts" class="list" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<section id="tab-titles" class="tab hidden">
+  <div class="panel">
+    <h2>Титулы</h2>
+    <div class="title-box"><div><div id="title-name" style="font-weight:700">—</div><div class="small" id="title-desc">Открой элементы, чтобы расти в ранге.</div></div><button class="btn" id="title-refresh">Обновить</button></div>
+  </div>
+</section>
+
+</body>
+</html>
