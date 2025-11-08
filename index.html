@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Elementix — Mini Alchemy (v1.4.8)</title>
+  <style>
+    :root{ --bg:#0a0a0a; --panel:#111214; --muted:#8b8e98; --text:#e8eaf0;
+      --accent:#8ef; --accent2:#7dffb6; --border:#21242b; --danger:#ff5a6b;
+      --gold:#ffcc00; --btn:#12141a; --hud:#0f1116; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0a0a0a,#0b0f14 120%);color:var(--text);
+      font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial}
+    .app{max-width:1100px;margin-inline:auto;padding:12px;display:grid;gap:12px}
+    header{display:grid;gap:8px}
+    .topline{display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:36px;height:36px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#78d5ff,transparent 40%),radial-gradient(circle at 70% 70%,#7dffb6,transparent 45%),#14161a;border:1px solid var(--border)}
+    .brand h1{font-size:17px;margin:0}
+    .ver{opacity:.6;font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:#0f1116}
+    .hud{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--border);border-radius:14px;background:var(--hud);
+         overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none}
+    .hud::-webkit-scrollbar{display:none}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:#0e1116;font-weight:600}
+    .iconbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:#12141a;color:var(--text);
+      display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .iconbtn:active{transform:translateY(1px)}
+    .icon-label{position:relative;font-size:18px;line-height:1}
+    .icon-label.off::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;background:var(--danger);
+      transform:rotate(-28deg);box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+    .grid{display:grid;gap:12px}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:12px}
+    .work{display:grid;gap:10px}
+    .bowls{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+    .bowl{border:1px dashed #2a2f3a;border-radius:14px;min-height:110px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,#0f1320,#10131a)}
+    .bowl .placeholder{color:#b9a3d1;opacity:.9;font-weight:700}
+    .mix-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#12141a;color:var(--text);cursor:pointer}
+    .btn.primary{background:#171c28;border-color:#263045}
+    .cards{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+    .card{border:1px solid var(--border);background:#0e1015;border-radius:14px;padding:10px 80px 10px 10px;cursor:pointer;display:grid;gap:6px;position:relative;min-height:56px}
+    .cardInner{display:flex;align-items:center;gap:8px;min-width:0}
+    .card .emoji{font-size:22px}
+    .card .name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rarity{position:absolute;top:8px;right:8px;font-size:11px;color:#9aa0aa;background:#0a0a0a;border:1px solid var(--border);border-radius:999px;padding:2px 8px;pointer-events:none}
+    .statusline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .shop-note{color:var(--muted);font-size:14px}
+
+    /* Confetti canvas behind modal */
+    #confetti{position:fixed;inset:0;pointer-events:none;z-index:1005;mix-blend-mode:screen}
+
+    /* Celebration modal */
+    .celebrate{position:fixed;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;}
+    .celebrate .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+    .cele-card{position:relative;background:linear-gradient(180deg,#172033,#101729);border:1px solid #2b3550;border-radius:16px;padding:18px 22px;min-width:340px;max-width:92vw;box-shadow:0 30px 80px rgba(0,0,0,.65);transform:scale(.94);opacity:0;animation:popIn .22s ease forwards}
+    .cele-top{display:flex;align-items:center;gap:12px;justify-content:center}
+    .cele-emoji{font-size:46px;filter:drop-shadow(0 6px 16px rgba(255,255,255,.08))}
+    .cele-name{font-weight:900;font-size:22px;letter-spacing:.2px;text-shadow:0 1px 0 rgba(0,0,0,.5)}
+    .cele-ribbon{margin-top:8px;display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #2b883b;background:linear-gradient(180deg,#1a5c2c,#12471f);color:#a6ffb6;font-size:12px}
+    .cele-desc{margin-top:10px;color:#dbe2f4;font-size:14px;text-align:center}
+    .cele-close{position:absolute;top:8px;right:8px;border:1px solid #3a4670;background:#1f2a45;color:#fff;border-radius:10px;padding:6px 9px;cursor:pointer;font-weight:800}
+    .cele-close:hover{background:#27345a}
+    @keyframes popIn{to{transform:scale(1);opacity:1}}
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+  <div class="app">
+    <header>
+      <div class="topline">
+        <div class="brand">
+          <div class="logo"></div>
+          <h1>Elementix — мини-алхимия</h1>
+        </div>
+        <span class="ver">v1.4.8</span>
+      </div>
+      <div class="hud">
+        <div class="pill">⭐ <strong id="stars">20</strong></div>
+        <div class="pill"><small>Платные подсказки</small> <strong id="paidCount">0</strong></div>
+        <button id="soundBtn" class="iconbtn" title="Звук"><span id="soundIcon" class="icon-label off">🔊</span></button>
+        <button id="journalBtn" class="iconbtn" title="Журнал">📜</button>
+        <button id="resetBtn" class="iconbtn" title="Сброс">🗑️</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel work">
+        <div class="bowls">
+          <div class="bowl" id="bowlA"><span class="placeholder">Перетащи или кликни элемент</span></div>
+          <div class="bowl" id="bowlB"><span class="placeholder">Перетащи или кликни элемент</span></div>
+        </div>
+        <div class="mix-actions">
+          <button id="mixBtn" class="btn primary">🥣 Смешать</button>
+          <button id="clearBtn" class="btn">🧹 Очистить</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="statusline">
+          <div class="pill">Открыто элементов: <strong id="discCount">0</strong></div>
+          <div style="display:flex; gap:8px; align-items:center">
+            <button id="hintBtn" class="btn primary">💡 Подсказка <small id="hintSub" style="opacity:.7;margin-left:6px"></small></button>
+            <button id="buyHintBtn" class="btn">Купить подсказки ⭐</button>
+          </div>
+        </div>
+        <div style="margin-top:10px" class="cards" id="cards"></div>
+        <p class="shop-note" id="hintNote"></p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ===== DATA =====
+    const ELEMENTS = [
+      { id:'air',    name:'Воздух',  emoji:'💨', rarity:'common', fact:'В каждом вдохе есть молекулы воздуха, которые видели динозавров.' },
+      { id:'earth',  name:'Земля',   emoji:'🌱', rarity:'common', fact:'В одной чайной ложке почвы могут жить миллиарды микроорганизмов.' },
+      { id:'fire',   name:'Огонь',   emoji:'🔥', rarity:'common', fact:'Пламя невесомо — форму ему придаёт движение горячего газа.' },
+      { id:'water',  name:'Вода',    emoji:'💧', rarity:'common', fact:'Горячая вода иногда замерзает быстрее холодной (эффект Мпембы).' },
+      { id:'steam',  name:'Пар',     emoji:'♨️', rarity:'common', fact:'Невидимый перегретый пар опаснее видимого тумана из капель.' },
+      { id:'lava',   name:'Лава',    emoji:'🌋', rarity:'rare',   fact:'Базальтовая лава может течь быстрее бегущего человека.' },
+      { id:'mud',    name:'Грязь',   emoji:'🟫', rarity:'common', fact:'Грязевые вулканы извергают газ и жидкую грязь, а не магму.' },
+      { id:'stone',  name:'Камень',  emoji:'🪨', rarity:'common', fact:'Камни формируются магматически, осадочно и метаморфически.' },
+      { id:'energy', name:'Энергия', emoji:'⚡', rarity:'rare',   fact:'Молния нагревает воздух до ~30 000 °C — горячее поверхности Солнца.' },
+      { id:'metal',  name:'Металл',  emoji:'⚙️', rarity:'rare',   fact:'Железо — самое распространённое вещество в ядре Земли.' }
+    ];
+    const ELEMENTS_BY_ID = Object.fromEntries(ELEMENTS.map(e=>[e.id,e]));
+    const RECIPES = [
+      { a:'fire', b:'water', result:'steam' },
+      { a:'fire', b:'earth', result:'lava' },
+      { a:'water', b:'earth', result:'mud' },
+      { a:'earth', b:'air', result:'stone' },
+      { a:'fire', b:'air', result:'energy' },
+      { a:'stone', b:'fire', result:'metal' }
+    ];
+    const RECIPE_MAP = new Map(RECIPES.map(r=>[[r.a,r.b].sort().join('|'), r.result]));
+    const BASE = ['air','earth','fire','water'];
+
+    // ===== SAFE STORAGE HELPERS =====
+    const safeStorage = {
+      get(key){ try{ return localStorage.getItem(key); }catch{ return null; } },
+      set(key,val){ try{ localStorage.setItem(key,val); }catch{} },
+      remove(key){ try{ localStorage.removeItem(key); }catch{} }
+    };
+
+    // ===== STATE (seed with base first) =====
+    const state = { discovered:new Set(BASE), stars:20, bowlA:null, bowlB:null, soundOn:false, paidHints:0 };
+    try{
+      const saved = JSON.parse(safeStorage.get('elementix_state')||'{}');
+      if (Array.isArray(saved?.discovered)) saved.discovered.forEach(id=>state.discovered.add(id));
+      if (typeof saved?.stars==='number') state.stars = saved.stars;
+      if (typeof saved?.paidHints==='number') state.paidHints = saved.paidHints;
+      state.soundOn = !!saved?.soundOn;
+    }catch{}
+    function persist(){
+      safeStorage.set('elementix_state', JSON.stringify({discovered:[...state.discovered], stars:state.stars, soundOn:state.soundOn, paidHints:state.paidHints}));
+    }
+
+    // ===== CONFETTI (behind modal) =====
+    (function(){
+      const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d');
+      let W=canvas.width=window.innerWidth, H=canvas.height=window.innerHeight;
+      window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;});
+      let parts=[]; let emitter=null; let running=false;
+      const colors = ['#ffd400','#ff6b6b','#4dd599','#4da3ff','#b36bff','#ffffff'];
+      function addBurst(n,x,y){ for(let i=0;i<n;i++){ const ang=Math.random()*Math.PI*2; const sp=2+Math.random()*4; const shape=Math.random()<0.5?'c':'s'; parts.push({x,y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp-3,g:0.08+Math.random()*0.08,r:2+Math.random()*4,life:110+Math.random()*70,color:colors[(Math.random()*colors.length)|0],shape}); } if(!running){ running=true; requestAnimationFrame(loop);} }
+      function draw(p){ ctx.globalAlpha=Math.max(0,Math.min(1,p.life/120)); ctx.fillStyle=p.color; if(p.shape==='c'){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); } else { ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.x*0.05); ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2); ctx.restore(); } }
+      function loop(){ ctx.clearRect(0,0,W,H); ctx.globalCompositeOperation='screen'; parts.forEach(p=>{ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.life--; draw(p); }); parts=parts.filter(p=>p.life>0&&p.y<H+30); if(parts.length>0||emitter){ requestAnimationFrame(loop);} else { running=false; ctx.clearRect(0,0,W,H);} }
+      window.runCelebration=(x,y)=>{ emitter=setInterval(()=>addBurst(30,x||W/2,y||H*0.35),120); setTimeout(()=>{ clearInterval(emitter); emitter=null; },4000); if(!running){ running=true; requestAnimationFrame(loop);} };
+      window.stopCelebration=()=>{ if(emitter){ clearInterval(emitter); emitter=null; } parts.length=0; ctx.clearRect(0,0,W,H); running=false; };
+    })();
+
+    // ===== CELEBRATION MODAL =====
+    function showCelebrate(element, isNew){
+      const wrap = document.createElement('div');
+      wrap.className='celebrate';
+      wrap.innerHTML=`
+        <div class="backdrop"></div>
+        <div class="cele-card">
+          <button class="cele-close" aria-label="Закрыть">×</button>
+          <div class="cele-top">
+            <div class="cele-emoji">${element.emoji}</div>
+            <div class="cele-name">${element.name}</div>
+          </div>
+          ${isNew?'<div class="cele-ribbon">Новый элемент!</div>':''}
+          <div class="cele-desc">Редкость: <b>${element.rarity==='rare'?'Редкий':'Обычный'}</b><br>${element.fact||''}</div>
+        </div>`;
+      document.body.appendChild(wrap);
+      const card = wrap.querySelector('.cele-card'); const r=card.getBoundingClientRect();
+      runCelebration(r.left+r.width/2, r.top+r.height/2);
+      const close=()=>{ stopCelebration(); wrap.remove(); };
+      wrap.querySelector('.cele-close').addEventListener('click',close);
+      wrap.querySelector('.backdrop').addEventListener('click',close);
+    }
+
+    // ===== REFS =====
+    const cardsEl=document.getElementById('cards');
+    const bowlA=document.getElementById('bowlA'); const bowlB=document.getElementById('bowlB');
+    const mixBtn=document.getElementById('mixBtn'); const clearBtn=document.getElementById('clearBtn');
+    const hintBtn=document.getElementById('hintBtn'); const buyHintBtn=document.getElementById('buyHintBtn');
+    const hintSub=document.getElementById('hintSub'); const hintNote=document.getElementById('hintNote');
+    const starsEl=document.getElementById('stars'); const paidCount=document.getElementById('paidCount');
+    const soundBtn=document.getElementById('soundBtn'); const soundIcon=document.getElementById('soundIcon');
+    const resetBtn=document.getElementById('resetBtn'); const discCountEl=document.getElementById('discCount');
+
+    // ===== UI =====
+    function renderCards(){
+      const items = ELEMENTS.filter(e=>state.discovered.has(e.id));
+      cardsEl.innerHTML = items.map(e=>`<div class="card" data-id="${e.id}" draggable="true">
+        <span class="rarity">${e.rarity==='rare'?'Редкий':'Обычный'}</span>
+        <div class="cardInner"><span class="emoji">${e.emoji}</span><span class="name">${e.name}</span></div>
+      </div>`).join('');
+      document.querySelectorAll('.card').forEach(c=>{
+        c.addEventListener('click',()=>{ const id=c.dataset.id; if(!state.bowlA) state.bowlA=id; else state.bowlB=id; renderBowls(); });
+        c.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/element-id', c.dataset.id)});
+      });
+      discCountEl.textContent = state.discovered.size;
+    }
+    function renderBowls(){
+      bowlA.innerHTML = state.bowlA ? `<div class="chip">${ELEMENTS_BY_ID[state.bowlA].emoji} ${ELEMENTS_BY_ID[state.bowlA].name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+      bowlB.innerHTML = state.bowlB ? `<div class="chip">${ELEMENTS_BY_ID[state.bowlB].emoji} ${ELEMENTS_BY_ID[state.bowlB].name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+    }
+    function updateStars(){ starsEl.textContent = state.stars; persist(); }
+    function updatePaid(){ paidCount.textContent = state.paidHints; persist(); }
+    function updateSoundUI(){ soundIcon.classList.toggle('off', !state.soundOn); persist(); }
+
+    // ===== HINTS (short) =====
+    const CD=12*60*60*1000;
+    function getFreeAt(){ try{return +(localStorage.getItem('hintFreeAt')||0)}catch{return 0;} }
+    function setFreeAt(ts){ try{localStorage.setItem('hintFreeAt', String(ts))}catch{} }
+    function fmtHMS(ms){ const s=Math.max(0,Math.floor(ms/1000)); const h=Math.floor(s/3600); const m=Math.floor((s%3600)/60); const ss=s%60; const pad=n=>String(n).padStart(2,'0'); return `${pad(h)}:${pad(m)}:${pad(ss)}`;}
+    function updateHintState(){ const left=getFreeAt()-Date.now(); hintSub.textContent = left>0?`через ${fmtHMS(left)}`:'(доступна)'; }
+    function makeHint(){
+      const cand = RECIPES.filter(r=>!state.discovered.has(r.result)&&state.discovered.has(r.a)&&state.discovered.has(r.b));
+      if(!cand.length){ alert('Пока нечего подсказать — попробуй другие сочетания!'); return; }
+      const pick = cand[Math.floor(Math.random()*candidates.length)];
+    }
+    hintBtn.addEventListener('click',()=>{
+      const left=getFreeAt()-Date.now();
+      if(left<=0){ setFreeAt(Date.now()+CD); updateHintState(); alert('Подсказка активирована. Подсветка доступна в следующем билде.'); return; }
+      if(state.paidHints>0){ state.paidHints--; updatePaid(); alert('Платная подсказка активирована.'); return; }
+      openShop();
+    });
+
+    // ===== MIX =====
+    mixBtn.addEventListener('click', ()=>{
+      if(!state.bowlA||!state.bowlB){ alert('Нужно 2 элемента'); return;}
+      const key=[state.bowlA,state.bowlB].sort().join('|'); const result=RECIPE_MAP.get(key);
+      if(!result){ alert('Не получилось. Попробуй другое сочетание.'); return; }
+      const wasNew=!state.discovered.has(result); state.discovered.add(result);
+      renderCards(); renderBowls(); persist();
+      const el = ELEMENTS_BY_ID[result]; showCelebrate(el, wasNew);
+    });
+    clearBtn.addEventListener('click',()=>{ state.bowlA=state.bowlB=null; renderBowls(); });
+
+    // ===== INIT & RESET =====
+    function init(){ updateStars(); updatePaid(); updateSoundUI(); renderCards(); renderBowls(); updateHintState(); setInterval(updateHintState,1000); }
+    init();
+    soundBtn.addEventListener('click',()=>{ state.soundOn=!state.soundOn; updateSoundUI(); });
+    resetBtn.addEventListener('click',()=>{
+      if(!confirm('Сбросить прогресс до начала (4 базовых элемента)?')) return;
+      safeStorage.remove('elementix_state'); safeStorage.remove('hintFreeAt');
+      state.discovered=new Set(BASE); state.stars=0; state.paidHints=0; state.bowlA=state.bowlB=null; state.soundOn=false;
+      persist(); init();
+    });
+
+    // ===== SHOP (minimal, as before) =====
+    const buyHintBtn=document.getElementById('buyHintBtn');
+    buyHintBtn.addEventListener('click',()=>alert('Магазин в этом билде без изменений.'));
+  </script>
+</body>
+</html>
