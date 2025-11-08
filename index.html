@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Elementix — алхимия</title>
+<meta name="color-scheme" content="dark"><meta name="theme-color" content="#0b0f14">
+<style>
+:root{--bg:#0b0f14;--panel:#10161d;--line:#1f2a39;--ink:#e7ecf4;--muted:#9fb0bf;--accent:#6fb1ff;--gold:#ffd166;--success:#8aff9c}
+*{box-sizing:border-box}html,body{height:100%;margin:0;color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+body{background:radial-gradient(800px 480px at 80% -10%, #182335, #0b0f14)}
+.app{min-height:100%;display:flex;flex-direction:column}
+
+/* ===== Unified top shell (header+crumbs+tools) ===== */
+.topShell{position:sticky;top:0;z-index:80;transition:transform .24s ease, opacity .24s ease; will-change: transform}
+.topShell.compact{transform:translateY(-100%); opacity:0.98}
+
+/* header */
+.header{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border-bottom:1px solid var(--line);background:rgba(11,15,20,.98)}
+.title{font-weight:800}.spacer{flex:1}
+.gold{display:flex;align-items:center;gap:8px;background:#121b28;border:1px solid #253247;color:var(--gold);border-radius:999px;padding:6px 12px;font-weight:800}
+.soundBtn{background:#162030;border:1px solid #223247;border-radius:10px;color:#cfe1ff;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:6px}
+
+/* crumbs */
+.crumbs{display:flex;gap:10px;align-items:center;overflow-x:auto;padding:8px 6px;background:rgba(11,15,20,.98);border-bottom:1px solid var(--line)}
+.token{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:linear-gradient(180deg,#0f1620,#0b1218);border:1px solid #203043;box-shadow:0 6px 18px rgba(0,0,0,.25)}.token .emo{font-size:22px}
+
+/* main area */
+.main{display:flex;flex-direction:column;gap:10px;padding:8px 12px calc(170px + env(safe-area-inset-bottom,0px))}
+
+/* bowls */
+.bowls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.drop{position:relative;background:#0b1218;border:1px dashed #2a384b;border-radius:16px;min-height:140px;display:grid;place-items:center;overflow:hidden}
+.drop .hint{position:absolute;top:8px;left:12px;color:var(--muted);font-size:12px}
+.selection{display:flex;gap:12px;align-items:center;animation:arrive .32s ease-out}
+.selection .emoji{font-size:56px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+.selection .name{font-size:14px;color:#d7e8ff}
+@keyframes arrive{0%{transform:translateY(10px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+
+/* tools */
+.tools{background:rgba(11,15,20,.98);border:1px solid #1b2a3a;border-radius:12px;margin-top:4px;padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tools input{flex:1;background:#0b1218;border:1px solid var(--line);border-radius:10px;color:#cfe1ff;padding:10px}.count{font-size:12px;color:#9fb0bf}
+.btn{background:#1b2633;border:1px solid #253247;color:#cfe1ff;border-radius:14px;padding:10px 12px;font-weight:700;cursor:pointer}
+.btn.primary{background:#6fb1ff;border:none;color:#07101c;font-weight:900;padding:16px 28px;border-radius:20px;font-size:18px;justify-self:center}
+
+/* chips row (rarity) */
+.chips{display:flex;gap:8px;overflow:auto;padding:6px 2px}
+.chip{background:#111a23;border:1px solid #223247;color:#cfe1ff;border-radius:999px;padding:6px 10px;font-size:12px;white-space:nowrap;cursor:pointer}
+.chip.active{background:#6fb1ff;color:#07101c;border-color:#6fb1ff;font-weight:900}
+
+/* grid */
+.gridWrap{border:1px solid #1b2735;border-radius:12px;background:linear-gradient(180deg,#0d141c,#0a0f15)}
+#grid{position:relative;height:560px;overflow:auto}
+.gridInner{position:relative}
+.card{position:absolute;width:calc(25% - 12px);background: linear-gradient(180deg, #101821, #0b1218); border: 1px solid #1b2735; border-radius: 14px; padding: 10px; display: grid; gap: 6px; cursor: grab; box-shadow: 0 6px 18px rgba(0,0,0,.22); transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease}
+.card:hover{ transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0,0,0,.32); border-color: #263547; }
+.emoji{ font-size: 26px; text-shadow: 0 6px 12px rgba(0,0,0,.35) }
+.name{ font-size: 12px; color: #cfe1ff }
+.tag{ position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: #121b28; border: 1px solid #253247; color: #9fb0bf; }
+.card[data-rarity="common"] .tag{ background: rgba(173,186,200,.12); border-color: rgba(173,186,200,.30); color: #b9c6d3 }
+.card[data-rarity="rare"]   .tag{ background: rgba(111,177,255,.14); border-color: rgba(111,177,255,.32); color: #9dccff }
+.card[data-rarity="epic"]   .tag{ background: rgba(255,209,102,.14); border-color: rgba(255,209,102,.36); color: #ffd166 }
+.card.glow{box-shadow:0 0 0 3px rgba(111,177,255,.6), 0 0 20px rgba(111,177,255,.45); border-color:#6fb1ff; transform:translateZ(0) scale(1.02)}
+@keyframes hintBlink{0%{box-shadow:0 0 0 0 rgba(111,177,255,.0)}50%{box-shadow:0 0 0 8px rgba(111,177,255,.55)}100%{box-shadow:0 0 0 0 rgba(111,177,255,.0)}}
+.card.blink{animation:hintBlink 1s ease-in-out 5}
+
+/* dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:85;background:linear-gradient(180deg, rgba(11,15,20,0), rgba(11,15,20,.95));padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.dock .inner{display:grid;grid-template-columns:220px 1fr 220px;gap:12px;align-items:center;max-width:980px;margin:0 auto;width:100%}
+#hint{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;padding:14px 16px}.hline1{font-weight:900}.hline2{font-size:12px;opacity:.9}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#0b1218;border:1px solid #1f2a39;color:#cfe1ff;padding:12px 16px;border-radius:14px;opacity:0;animation:pop 4.6s ease-out forwards;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+@keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(10px)}10%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(4px)}}
+
+/* BIG CELEBRATION MODAL */
+.bigModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);z-index:3000}
+.bigModal.show{display:flex}
+.bigCard{width:min(92vw,560px);background:linear-gradient(180deg,#0f1722,#0b1218);border:1px solid #223347;border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.5);text-align:center;position:relative;overflow:hidden}
+.spark{position:absolute;inset:-2px;border-radius:20px;pointer-events:none;background:radial-gradient(400px 220px at 70% -10%, rgba(111,177,255,.25), transparent), radial-gradient(420px 180px at 10% 110%, rgba(138,255,179,.18), transparent)}
+.badgeNew{display:inline-flex;align-items:center;gap:8px;background:rgba(138,255,156,.08);border:1px solid rgba(138,255,156,.35);color:var(--success);padding:6px 10px;border-radius:999px;font-weight:800;margin:6px auto 12px}
+.elEmoji{font-size:70px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.elName{font-size:22px;font-weight:900;margin-top:6px}
+.elRare{font-size:12px;margin-top:2px}
+.elRare.common{color:#b9c6d3}.elRare.rare{color:#9dccff}.elRare.epic{color:#ffd166}
+.fact{margin-top:12px;color:#cfe1ff;font-size:14px;line-height:1.35;opacity:.95}
+.okBtn{margin-top:16px;background:#6fb1ff;border:none;color:#07101c;font-weight:900;padding:12px 18px;border-radius:12px;cursor:pointer}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:2999}
+
+/* Hint panel (BOTTOM, with pulse) */
+.hintPanel{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2500;background:#0b1218;border:1px solid #4aa0ff;box-shadow:0 12px 36px rgba(0,0,0,.55), 0 0 0 6px rgba(111,177,255,.18);border-radius:14px;padding:12px 16px;display:none;gap:10px;align-items:center}
+.hintPanel.show{display:flex;animation:panelPulse 1.2s ease-in-out 2}
+@keyframes panelPulse{0%{box-shadow:0 12px 36px rgba(0,0,0,.55), 0 0 0 0 rgba(111,177,255,.25)}50%{box-shadow:0 12px 36px rgba(0,0,0,.55), 0 0 0 14px rgba(111,177,255,.15)}100%{box-shadow:0 12px 36px rgba(0,0,0,.55), 0 0 0 0 rgba(111,177,255,.25)}}
+.hRow{display:flex;align-items:center;gap:10px;font-weight:800}
+.hRow .emo{font-size:18px}.hRow .txt{font-size:14px;color:#cfe1ff}
+.hRow .sep{opacity:.6}
+
+/* Journal panel */
+.journal{position:fixed;top:0;right:0;bottom:0;width:min(420px,92vw);background:#0b1218;border-left:1px solid #1f2a39;z-index:3500;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s;box-shadow:-12px 0 28px rgba(0,0,0,0)}
+.journal.show{transform:translateX(0);box-shadow:-12px 0 28px rgba(0,0,0,.35)}
+.j-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #1f2a3a;background:#0f1620}
+.j-title{font-weight:900}
+.j-close{background:#162030;border:1px solid #223247;border-radius:10px;color:#cfe1ff;padding:6px 10px;cursor:pointer}
+.j-list{padding:10px 12px;overflow:auto}
+.j-item{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px dashed #1b2a3a}
+.j-emo{font-size:20px}.j-name{font-size:14px;color:#cfe1ff;font-weight:700}.j-time{margin-left:auto;font-size:12px;color:#9fb0bf}
+
+/* mobile */
+@media (max-width:520px){
+  #grid{height:60vh}
+}
+
+/* side buttons same height */
+.btn.side{min-height:52px;border-radius:16px;font-weight:800}
+@media (max-width:520px){
+  .dock .inner{grid-template-columns:1fr minmax(180px, 56vw) 1fr;gap:10px}
+  .btn.primary{padding:14px 22px;font-size:17px;border-radius:18px}
+  .btn.side{min-height:50px}
+}
+
+
+/* v127y — fancy dock */
+.dock{padding:16px 12px calc(18px + env(safe-area-inset-bottom,0px))}
+.dock .inner{grid-template-columns:180px 1fr 180px;gap:12px;max-width:960px}
+
+.btn.side{
+  min-height:52px;
+  border-radius:999px;
+  background:#121b28;
+  border:1px solid #243447;
+  color:#cfe1ff;
+  font-weight:800;
+  transition:transform .12s ease, box-shadow .18s ease, background .18s ease;
+}
+.btn.side:active{transform:translateY(1px)}
+.btn.side:hover{box-shadow:0 8px 22px rgba(0,0,0,.35); background:#142033}
+
+/* Elevated glowing primary */
+.btn.primary{
+  position:relative;
+  justify-self:center;
+  min-width:min(52vw,360px);
+  padding:14px 26px;
+  font-size:20px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#7cc3ff,#6fb1ff);
+  color:#07101c;
+  border:none;
+  box-shadow: 0 10px 24px rgba(111,177,255,.40), 0 0 0 6px rgba(111,177,255,.10);
+  transform:translateY(-4px);
+  transition:transform .16s ease, box-shadow .2s ease;
+}
+.btn.primary::after{
+  content:"";
+  position:absolute; inset:-6px;
+  border-radius:999px;
+  box-shadow:0 0 40px rgba(111,177,255,.45);
+  opacity:.0; pointer-events:none;
+  transition:opacity .25s ease;
+}
+.btn.primary:hover{box-shadow:0 14px 30px rgba(111,177,255,.48), 0 0 0 10px rgba(111,177,255,.12)}
+.btn.primary:hover::after{opacity:.7}
+.btn.primary:active{transform:translateY(-2px)}
+
+/* subtle pulse */
+@keyframes softPulse{
+  0%{box-shadow:0 12px 30px rgba(111,177,255,.42), 0 0 0 10px rgba(111,177,255,.10)}
+  50%{box-shadow:0 16px 44px rgba(111,177,255,.60), 0 0 0 14px rgba(111,177,255,.16)}
+  100%{box-shadow:0 12px 30px rgba(111,177,255,.42), 0 0 0 10px rgba(111,177,255,.10)}
+}
+.btn.primary{animation:softPulse 2.6s ease-in-out infinite}
+
+/* Mobile tune */
+@media (max-width:520px){
+  .dock .inner{grid-template-columns:1fr minmax(200px,60vw) 1fr;gap:10px}
+  .btn.side{min-height:50px}
+  .btn.primary{padding:13px 22px;font-size:18px;transform:translateY(-3px)}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="topShell" class="topShell">
+    <div class="header">
+      <div class="title">Elementix — алхимия</div>
+      <div class="spacer"></div>
+      <button class="soundBtn" id="soundBtn">🔊 Звук</button>
+      <div class="gold">🪙 Золото: <span id="stars">20</span></div>
+    </div>
+    <div class="crumbs" id="crumbs"></div>
+    <div class="tools" id="tools">
+      <input id="search" placeholder="Поиск по коллекции…">
+      <button id="logBtn" class="btn">📜 Журнал</button>
+      <button id="reset" class="btn">Сброс</button>
+      <div class="count">Открыто: <span id="openCount">0</span> / <span id="totalCount">300</span> • v127w</div>
+      <div class="chips" id="chips">
+        <div class="chip" data-chip="all">Все</div>
+        <div class="chip" data-chip="common">Обычный</div>
+        <div class="chip" data-chip="rare">Редкий</div>
+        <div class="chip" data-chip="epic">Эпический</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="bowls">
+      <div class="drop" id="bA"><div class="hint">Перетащи или кликни карточку</div></div>
+      <div class="drop" id="bB"><div class="hint">Перетащи или кликни карточку</div></div>
+    </div>
+
+    <div class="gridWrap"><div id="grid"><div id="gridInner" class="gridInner"></div></div></div>
+  </div>
+
+  <div class="dock"><div class="inner">
+    <button id="hint" class="btn side"><div class="hline1" id="h1">Подсказка</div><div class="hline2" id="h2">бесплатно</div></button>
+    <button id="mix" class="btn primary">Смешать</button>
+    <button id="clear" class="btn side">Очистить чаши</button>
+  </div></div>
+</div>
+
+<button class="fab" id="toTop" style="display:none;position:fixed;right:14px;bottom:110px;z-index:90;background:#0f1a26;border:1px solid #243447;border-radius:999px;color:#cfe1ff;padding:10px 12px">⬆️ Наверх</button>
+
+<!-- celebration modal + confetti -->
+<canvas id="confetti" style="display:none"></canvas>
+<div class="bigModal" id="newModal" aria-hidden="true">
+  <div class="bigCard" role="dialog" aria-live="polite">
+    <div class="spark"></div>
+    <div class="badgeNew">✨ Новый элемент!</div>
+    <div class="elEmoji" id="nmEmoji">✨</div>
+    <div class="elName" id="nmName">Новый элемент</div>
+    <div class="elRare common" id="nmRare">Обычный</div>
+    <div class="fact" id="nmFact">Каждый новый элемент — шаг к великим открытиям!</div>
+    <button class="okBtn" id="newOk">Окей</button>
+  </div>
+</div>
+
+<!-- Hint panel (BOTTOM, names) -->
+<div class="hintPanel" id="hintPanel">
+  <div class="hRow">
+    <span class="emo" id="pA">?</span><span class="txt" id="tA">Элемент A</span>
+    <span class="sep">+</span>
+    <span class="emo" id="pB">?</span><span class="txt" id="tB">Элемент B</span>
+    <span class="sep">→</span>
+    <span class="emo" id="pO">?</span><span class="txt" id="tO">Результат</span>
+  </div>
+</div>
+
+<!-- Journal panel -->
+<div id="journal" class="journal">
+  <div class="j-head">
+    <div class="j-title">Журнал открытий</div>
+    <button id="jClose" class="j-close">Закрыть</button>
+  </div>
+  <div id="jList" class="j-list"></div>
+</div>
+
+<script>
+/* ===== Config ===== */
+const MAX_ELEMENTS=300;
+const SOUND_URL = 'assets/new-element.mp3';
+const FIXED_VOLUME = 0.8;
+
+/* ===== Data ===== */
+const BASE=[["fire","Огонь","🔥","common"],["water","Вода","💧","common"],["earth","Земля","🪨","common"],["air","Воздух","💨","common"]];
+const OFFICIAL={"steam":{"n":"Пар","e":"♨️","r":"common"},"mud":{"n":"Грязь","e":"🟫","r":"common"},"dust":{"n":"Пыль","e":"🧹","r":"common"},"lava":{"n":"Лава","e":"🌋","r":"common"},"stone":{"n":"Камень","e":"🗿","r":"common"},"sand":{"n":"Песок","e":"🏖️","r":"common"},"glass":{"n":"Стекло","e":"🪟","r":"common"},"pressure":{"n":"Давление","e":"🧯","r":"common"},"mountain":{"n":"Гора","e":"⛰️","r":"rare"},"rain":{"n":"Дождь","e":"🌧️","r":"common"},"energy":{"n":"Энергия","e":"⚡️","r":"rare"},"cloud":{"n":"Туча","e":"☁️","r":"common"},"ash":{"n":"Пепел","e":"🌫️","r":"common"},"clay":{"n":"Глина","e":"🧱","r":"common"},"metal":{"n":"Металл","e":"🔩","r":"rare"},"wind":{"n":"Ветер","e":"🌬️","r":"common"},"ice":{"n":"Лёд","e":"🧊","r":"common"},"snow":{"n":"Снег","e":"❄️","r":"common"}};
+const RECIPES={
+  "fire+water":"steam","earth+water":"mud","earth+air":"dust","fire+earth":"lava",
+  "air+air":"pressure","earth+pressure":"mountain","water+air":"rain"
+};
+const FACTS={"steam":"Пар поднимается, потому что горячий воздух легче холодного.","mud":"Грязь удерживает влагу и помогает растениям расти.","dust":"Пыль — микрочастицы земли и пыльцы.","lava":"Лава — расплавленная порода из недр Земли.","stone":"Камень — основа гор.","sand":"Стекло делают из песка при высокой температуре.","glass":"Аморфная структура делает стекло прозрачным.","pressure":"Давление меняет свойства веществ.","mountain":"Горы растут, когда плиты сталкиваются.","rain":"Дождь — вода из облаков."};
+
+/* ===== State ===== */
+const SAVE_KEY='elementix-v127w', SOUND_ON_KEY='elementix-sound-on';
+const $=id=>document.getElementById(id);
+const grid=$('grid'), gridInner=$('gridInner'), bA=$('bA'), bB=$('bB'), crumbs=$('crumbs');
+const topShell=$('topShell'); const soundBtn=$('soundBtn'); const jPanel=$('journal'); const jList=$('jList');
+let state={
+  disc:new Set(BASE.map(x=>x[0])),
+  order:[...BASE.map(x=>x[0])],
+  a:null,b:null,
+  stars:20,
+  journal:[],
+  soundOn:true,
+  filter:'all',
+  widthCols:4, cardW:0, cardH:132, gap:12, data:[]
+};
+try{
+  const raw=localStorage.getItem(SAVE_KEY); if(raw){ const o=JSON.parse(raw);
+    state.disc=new Set(o.d||BASE.map(x=>x[0])); state.order=o.o&&o.o.length?o.o:[...state.disc];
+    state.a=o.a||null; state.b=o.b||null; state.stars=(typeof o.stars==='number')?o.stars:20; state.journal=Array.isArray(o.journal)?o.journal:[]; state.filter=o.filter||'all';
+  }
+}catch{}
+try{ const s=localStorage.getItem(SOUND_ON_KEY); if(s!==null) state.soundOn=(s==='1'); }catch{}
+function persist(){ localStorage.setItem(SAVE_KEY, JSON.stringify({d:[...state.disc],o:state.order,a:state.a,b:state.b,stars:state.stars,journal:state.journal,filter:state.filter})); localStorage.setItem(SOUND_ON_KEY, state.soundOn?'1':'0'); }
+
+/* ===== Helpers ===== */
+function ALL(){ const m=new Map(); BASE.forEach(([i,n,e,r])=>m.set(i,{id:i,n,e,r})); Object.entries(OFFICIAL).forEach(([k,v])=>m.set(k,{id:k,n:v.n,e:v.e,r:v.r})); return m; }
+function nameOf(id){ const it=ALL().get(id)||{n:id,e:'?'}; return `${it.e} ${it.n}`; }
+function keyFor(a,b){ return [a,b].sort().join('+'); }
+
+/* ===== Sound ===== */
+function updateSoundBtn(){ soundBtn.textContent= state.soundOn?'🔊 Звук':'🔇 Звук'; }
+soundBtn.addEventListener('click',()=>{ state.soundOn=!state.soundOn; updateSoundBtn(); persist(); });
+updateSoundBtn();
+async function playSound(){ if(!state.soundOn) return; try{ const a=new Audio(SOUND_URL); a.volume=0.8; await a.play(); }catch(e){} }
+
+/* ===== Toast ===== */
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),4600); }
+
+/* ===== Confetti & Celebration ===== */
+let confettiTimer=null, confettiCanvas=$('confetti'), confettiStart=0;
+function startConfetti(){
+  stopConfetti();
+  confettiCanvas.style.display='block';
+  const ctx=confettiCanvas.getContext('2d');
+  function fit(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; } fit(); addEventListener('resize',fit);
+  const N=220; let parts=Array.from({length:N},()=>({x:Math.random()*innerWidth,y:Math.random()*-innerHeight,r:2+Math.random()*4,s:1+Math.random()*2.5,a:Math.random()*Math.PI*2,c:['#ffd166','#6fb1ff','#8aff9c','#ff9aa2','#fbd6ff'][Math.floor(Math.random()*5)]}));
+  confettiStart=performance.now();
+  function draw(now){
+    const elapsed = now - confettiStart; let factor=1; if(elapsed>4000){ factor=Math.max(0,1-(elapsed-4000)/2000); }
+    ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    for(const p of parts){ if(elapsed>4000 && Math.random()>factor) continue; ctx.beginPath(); ctx.fillStyle=p.c; ctx.globalAlpha=0.85*factor; ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); p.y+=p.s; p.x+=Math.sin(p.a)*0.8; p.a+=0.02; if(p.y-p.r>confettiCanvas.height){ if(factor>0.05){ p.y=-10; p.x=Math.random()*confettiCanvas.width; } } }
+    if(factor<=0){ stopConfetti(); return; }
+    confettiTimer=requestAnimationFrame(draw);
+  }
+  confettiTimer=requestAnimationFrame(draw);
+}
+function stopConfetti(){ if(confettiTimer){ cancelAnimationFrame(confettiTimer); confettiTimer=null; } confettiCanvas.style.display='none'; }
+let savedScrollY=0; function lockScroll(lock){ if(lock){ savedScrollY=scrollY; document.body.style.top=`-${savedScrollY}px`; document.body.style.position='fixed'; document.body.style.left='0'; document.body.style.right='0'; } else { document.body.style.position=''; document.body.style.top=''; document.body.style.left=''; document.body.style.right=''; scrollTo(0,savedScrollY||0);} }
+function celebrateNew(id,item){
+  $('nmEmoji').textContent=item.e||'✨'; $('nmName').textContent=item.n||'Новый элемент';
+  const rare=item.r||'common'; const rr=rare==='epic'?'Эпический':(rare==='rare'?'Редкий':'Обычный');
+  $('nmRare').textContent=rr; $('nmRare').className='elRare '+rare;
+  $('nmFact').textContent=FACTS[id]||"Каждый новый элемент — шаг к великим открытиям!";
+  const modal=$('newModal'); lockScroll(true); modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); startConfetti(); playSound();
+  $('newOk').onclick=()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); stopConfetti(); lockScroll(false); };
+}
+
+/* ===== Journal ===== */
+function renderJournal(){ const fmt=iso=>{ try{const d=new Date(iso);return d.toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});}catch{return ''}}; jList.innerHTML=(state.journal||[]).map(it=>`<div class="j-item"><div class="j-emo">${it.e||'✨'}</div><div class="j-name">${it.n||'Новый элемент'}</div><div class="j-time">${fmt(it.t)}</div></div>`).join('')||`<div style="color:#9fb0bf;opacity:.9;padding:12px">Пока пусто. Открывай новые элементы — записи появятся здесь.</div>`; }
+document.getElementById('logBtn').addEventListener('click',()=>{ renderJournal(); jPanel.classList.add('show'); });
+document.getElementById('jClose').addEventListener('click',()=> jPanel.classList.remove('show'));
+
+/* ===== Chips ===== */
+const chips=$('chips'); chips.addEventListener('click',(e)=>{ const chip=e.target.closest('.chip'); if(!chip) return; state.filter=chip.dataset.chip; chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active', c===chip)); buildDataList(); renderVirtual(); persist(); });
+
+/* ===== Grid virtualization ===== */
+function computeLayout(){
+  const w=grid.clientWidth||innerWidth; let cols=2; if(w>520) cols=3; if(w>760) cols=4; if(w>1024) cols=5;
+  state.widthCols=cols; state.cardW=Math.floor((w-(cols-1)*state.gap)/cols);
+  const css=document.getElementById('dynW')||(()=>{const s=document.createElement('style');s.id='dynW';document.head.appendChild(s);return s;})();
+  css.innerHTML=`.card{width:${state.cardW}px}`;
+}
+function buildDataList(){ const A=ALL(); const q=(document.getElementById('search').value||'').toLowerCase(); let items=[...state.order].filter(id=>A.has(id)&&state.disc.has(id));
+  if(state.filter!=='all'){ items=items.filter(id=> (A.get(id).r||'common')===state.filter); }
+  if(q){ items=items.filter(id=>A.get(id).n.toLowerCase().includes(q)); }
+  state.data=items.map(id=>({id,...A.get(id)})); document.getElementById('openCount').textContent=[...state.disc].length;
+}
+function renderVirtual(){ computeLayout(); const gap=state.gap,cw=state.cardW,ch=state.cardH,cols=state.widthCols;
+  const total=state.data.length; const rows=Math.ceil(total/cols); const totalH=rows*(ch+gap)-gap; gridInner.style.height=totalH+'px';
+  const st=grid.scrollTop, vh=grid.clientHeight; const firstRow=Math.max(0,Math.floor(st/(ch+gap))-2); const lastRow=Math.min(rows-1,Math.floor((st+vh)/(ch+gap))+2);
+  const first=firstRow*cols; const last=Math.min(total-1,(lastRow+1)*cols-1); gridInner.innerHTML='';
+  for(let i=first;i<=last;i++){ const it=state.data[i]; if(!it) continue; const row=Math.floor(i/cols), col=i%cols; const x=col*(cw+gap), y=row*(ch+gap);
+    const d=document.createElement('div'); d.className='card'; d.style.transform=`translate(${x}px,${y}px)`; d.style.height=ch+'px'; d.dataset.id=it.id; d.dataset.rarity=it.r||'common'; d.setAttribute('draggable','true');
+    d.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',it.id));
+    d.addEventListener('click',()=>selectByClick(it.id));
+    d.innerHTML=`<div class="tag">${it.r==='rare'?'Редкий':it.r==='epic'?'Эпический':'Обычный'}</div><div class="emoji">${it.e}</div><div class="name">${it.n}</div>`;
+    gridInner.appendChild(d);
+  }
+}
+grid.addEventListener('scroll',()=>{ renderVirtual(); document.getElementById('toTop').style.display = grid.scrollTop>grid.clientHeight ? 'block':'none'; });
+
+/* ===== Selection & bowls ===== */
+[bA,bB].forEach((b,ix)=>{ b.addEventListener('dragover',e=>e.preventDefault()); b.addEventListener('drop',e=>{e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(!ALL().has(id))return; setToBowl(id,ix==0?'A':'B');});});
+function bowlBlock(id){ if(!id) return '<div class="hint">Перетащи или кликни карточку</div>'; const it=ALL().get(id); return `<div class="selection"><div class="emoji">${it.e}</div><div class="name">${it.n}</div></div>`; }
+function renderBowls(){ bA.innerHTML=bowlBlock(state.a); bB.innerHTML=bowlBlock(state.b); renderCrumbs(); }
+function renderCrumbs(){ const parts=[]; if(state.a){ const it=ALL().get(state.a); parts.push(`<div class="token"><div class="emo">${it.e}</div></div>`);} if(state.b){ const it=ALL().get(state.b); parts.push(`<div class="token"><div class="emo">${it.e}</div></div>`);} crumbs.innerHTML=parts.join('')||'<div style="color:#9fb0bf;font-size:12px;padding:2px 6px">Выбери 2 элемента…</div>'; }
+function selectByClick(id){ const target=!state.a?'A':(!state.b?'B':'A'); setToBowl(id,target); }
+function setToBowl(id,which){ if(which==='A') state.a=id; else state.b=id; renderBowls(); persist(); }
+
+/* ===== Hint (BOTTOM panel + blinking cards) ===== */
+const hintPanel=document.getElementById('hintPanel'); const pA=document.getElementById('pA'), pB=document.getElementById('pB'), pO=document.getElementById('pO'); const tA=document.getElementById('tA'), tB=document.getElementById('tB'), tO=document.getElementById('tO');
+function autoScrollTo(id){ const node=[...document.querySelectorAll('.card')].find(n=>n.dataset.id===id); if(!node){ return; } const rect=node.getBoundingClientRect(); const gRect=grid.getBoundingClientRect(); const offset=rect.top-gRect.top; if(offset<0 || offset>grid.clientHeight-120){ grid.scrollTop += offset-60; setTimeout(()=>{ const n2=[...document.querySelectorAll('.card')].find(n=>n.dataset.id===id); if(n2){ n2.classList.add('glow','blink'); } },120); } else { node.classList.add('glow','blink'); } setTimeout(()=>document.querySelectorAll('.card.blink').forEach(n=>n.classList.remove('blink')),5200); setTimeout(()=>document.querySelectorAll('.card.glow').forEach(n=>n.classList.remove('glow')),5200); }
+document.getElementById('hint').addEventListener('click',()=>{
+  const known=[...state.disc]; const seen=new Set(known);
+  let choice=null;
+  for(let i=0;i<known.length;i++){
+    for(let j=i;j<known.length;j++){
+      const out=RECIPES[keyFor(known[i],known[j])];
+      if(out && !seen.has(out)){ choice=[known[i],known[j],out]; break; }
+    } if(choice) break;
+  }
+  if(choice){
+    const [a,b,out]=choice; const A=ALL();
+    pA.textContent=A.get(a).e; tA.textContent=A.get(a).n;
+    pB.textContent=A.get(b).e; tB.textContent=A.get(b).n;
+    pO.textContent=(OFFICIAL[out]?.e)||'✨'; tO.textContent=(OFFICIAL[out]?.n)||out;
+    hintPanel.classList.add('show');
+    setTimeout(()=>hintPanel.classList.remove('show'), 4200); // дольше держим, чтобы не пропустить
+    autoScrollTo(a); autoScrollTo(b);
+  }else{
+    toast('Подсказка: новых комбинаций не найдено');
+  }
+});
+
+/* ===== Craft ===== */
+document.getElementById('mix').addEventListener('click',async ()=>{
+  if(!state.a || !state.b){ toast('Выбери 2 элемента'); return; }
+  const out = RECIPES[keyFor(state.a,state.b)];
+  if(!out){ toast('Ничего не получилось'); return; }
+  const it=ALL().get(out)||{n:out,e:'✨',r:'common'};
+  const isNew=!state.disc.has(out);
+  state.a=null; state.b=null; renderBowls();
+  if(isNew){
+    state.disc.add(out); state.order.push(out);
+    state.journal.unshift({id:out,n:it.n,e:it.e,t:new Date().toISOString()}); if(state.journal.length>500) state.journal.pop();
+    celebrateNew(out,it); await playSound();
+  } else {
+    toast('Получилось: '+nameOf(out));
+    await playSound();
+  }
+  persist(); buildDataList(); renderVirtual();
+});
+
+/* ===== Other controls ===== */
+document.getElementById('clear').addEventListener('click',()=>{ state.a=null; state.b=null; renderBowls(); persist(); });
+document.getElementById('reset').addEventListener('click',()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); });
+document.getElementById('toTop').addEventListener('click',()=>{ grid.scrollTo({top:0,behavior:'smooth'}); });
+
+/* ===== Search ===== */
+document.getElementById('search').addEventListener('input',(()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(()=>{ buildDataList(); renderVirtual(); },120); }; })());
+
+/* ===== Unified hide/show of topShell on scroll ===== */
+let lastWinY=window.scrollY||0;
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY||0;
+  if(y>lastWinY+10){ topShell.classList.add('compact'); }
+  else if(y<lastWinY-10){ topShell.classList.remove('compact'); }
+  lastWinY=y;
+});
+
+/* ===== Init ===== */
+function init(){
+  document.getElementById('totalCount').textContent=MAX_ELEMENTS;
+  document.getElementById('openCount').textContent=[...state.disc].length;
+  // chips active
+  [...document.querySelectorAll('.chip')].forEach(c=>c.classList.toggle('active', c.dataset.chip===state.filter));
+  renderBowls(); buildDataList(); renderVirtual();
+}
+init();
+</script>
+</body></html>
