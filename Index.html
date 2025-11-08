@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Elementix — Mini Alchemy</title>
+  <style>
+    :root{
+      --bg:#0a0a0a;
+      --panel:#111214;
+      --muted:#8b8e98;
+      --text:#e8eaf0;
+      --accent:#8ef;
+      --accent2:#7dffb6;
+      --border:#21242b;
+      --danger:#ff6b6b;
+      --gold:#ffcc00;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0a0a0a,#0b0f14 120%);
+      color:var(--text);
+      font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Noto Sans', 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+    }
+    .app{
+      max-width:1100px;
+      margin-inline:auto;
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand .logo{
+      width:40px; height:40px; border-radius:10px;
+      background: radial-gradient(circle at 35% 30%, #78d5ff, transparent 40%),
+                  radial-gradient(circle at 70% 70%, #7dffb6, transparent 45%),
+                  #14161a;
+      border:1px solid var(--border);
+      box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 0 24px rgba(255,255,255,.04);
+    }
+    .brand h1{font-size:18px; margin:0}
+    .top-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      padding:6px 10px; border:1px solid var(--border); border-radius:999px;
+      background:#0f1116; color:var(--text); display:inline-flex; gap:8px; align-items:center;
+    }
+    .btn{
+      padding:10px 14px; border:1px solid var(--border); border-radius:12px;
+      background:#12141a; color:var(--text); cursor:pointer;
+      transition:transform .08s ease, background .2s;
+      user-select:none;
+    }
+    .btn:hover{background:#151924}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:#171c28; border-color:#263045}
+    .btn.secondary{background:#14161a}
+    .btn.small{padding:8px 10px; font-size:14px}
+    .btn[disabled]{opacity:.55; cursor:not-allowed}
+
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns: 1.2fr .8fr;
+    }
+    @media (max-width:960px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .panel{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px}
+
+    .cards{
+      display:grid; gap:10px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    .card{
+      border:1px solid var(--border);
+      background:#0e1015; border-radius:14px; padding:10px; cursor:pointer;
+      display:grid; gap:6px;
+      transition:transform .08s ease, box-shadow .2s, border-color .2s;
+      position:relative;
+    }
+    .card:hover{transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .cardInner{display:flex; align-items:center; gap:8px}
+    .card .emoji{font-size:22px}
+    .card .name{font-weight:600}
+    .rarity{position:absolute; top:8px; right:8px; font-size:11px; color:#9aa0aa; background:#0a0a0a; border:1px solid var(--border); border-radius:999px; padding:2px 8px}
+    .card.hint-glow{
+      outline:2px solid var(--accent2);
+      box-shadow:0 0 14px rgba(125,255,182,.35);
+    }
+
+    .work{
+      display:grid; gap:12px;
+      grid-template-rows: auto auto 1fr;
+    }
+    .bowls{display:grid; gap:10px; grid-template-columns:1fr 1fr}
+    .bowl{
+      border:1px dashed #2a2f3a; border-radius:14px; min-height:90px; padding:10px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      background:linear-gradient(180deg,#0f1320,#10131a);
+      position:relative; overflow:hidden;
+    }
+    .bowl::after{
+      content:''; position:absolute; inset:auto -40% 0 -40%;
+      height:30px; background:radial-gradient(ellipse at center, rgba(125,255,182,.2), transparent 70%);
+      filter:blur(10px);
+    }
+    .bowl .placeholder{color:#869; opacity:.7}
+    .mix-actions{display:flex; gap:10px; flex-wrap:wrap}
+    .statusline{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+
+    .shop-note{color:var(--muted); font-size:14px}
+
+    /* Toasts */
+    .toast{
+      position:fixed; left:50%; top:18px; transform:translateX(-50%);
+      background:#151923; border:1px solid var(--border); border-radius:12px; padding:10px 14px;
+      z-index:999; box-shadow:0 20px 40px rgba(0,0,0,.35); display:none;
+    }
+    .toast.show{display:block; animation:toastIn .2s ease}
+    @keyframes toastIn{from{opacity:0; transform:translate(-50%, -6px)} to{opacity:1; transform:translate(-50%, 0)}}
+
+    /* Confetti canvas */
+    #confetti{ position:fixed; inset:0; pointer-events:none; z-index: 998; }
+
+    /* Fly animation */
+    .fly-ghost {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      transition: transform .5s cubic-bezier(.2,.7,.2,1), opacity .5s;
+      will-change: transform, opacity;
+    }
+
+    /* Modal (Journal) */
+    .modal.hidden{display:none}
+    .modal{ position:fixed; inset:0; z-index:1000;}
+    .modal__backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45);}
+    .modal__panel{ position:relative; margin:6vh auto; max-width:820px; background:#101216; border:1px solid var(--border); border-radius:16px; padding:14px; }
+    .modal__header{ display:flex; align-items:center; justify-content:space-between; gap:12px;}
+    .modal__tools{ display:flex; gap:12px; align-items:center; margin:12px 0; flex-wrap:wrap}
+    .modal__tools input[type="text"]{ flex:1; min-width:200px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:#0b0d12; color:var(--text);}
+    .modal__list{ max-height:60vh; overflow:auto; display:grid; gap:8px; }
+    .jl-item{ padding:10px; border-radius:12px; background:#0e1116; border:1px solid var(--border); display:grid; gap:6px }
+    .jl-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .jl-dot{ opacity:.7; font-size:12px }
+
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#0b0e14 }
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+  <div class="toast" id="toast"></div>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Elementix — мини‑алхимия</h1>
+      </div>
+      <div class="top-actions">
+        <div class="pill" id="starsPill">Баланс: <strong><span id="stars">20</span></strong> <span title="Telegram Stars">⭐</span></div>
+        <button id="soundBtn" class="btn small">🔇 Звук выкл</button>
+        <button id="journalBtn" class="btn small">📜 Журнал</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="statusline">
+          <div class="pill">Открыто элементов: <strong id="discCount">0</strong></div>
+          <div style="display:flex; gap:10px; align-items:center">
+            <button id="hintBtn" class="btn primary">💡 Подсказка <small id="hintSub" style="color:var(--muted)"></small></button>
+            <button id="buyHintBtn" class="btn">Купить за <span style="color:var(--gold)">⭐10</span></button>
+          </div>
+        </div>
+        <div style="margin-top:10px" class="cards" id="cards"></div>
+        <p class="shop-note" id="hintNote"></p>
+      </section>
+
+      <section class="panel work">
+        <div class="bowls">
+          <div class="bowl" id="bowlA"><span class="placeholder">Перетащи или кликни элемент</span></div>
+          <div class="bowl" id="bowlB"><span class="placeholder">Перетащи или кликни элемент</span></div>
+        </div>
+        <div class="mix-actions">
+          <button id="mixBtn" class="btn primary">🥣 Смешать</button>
+          <button id="clearBtn" class="btn secondary">🧹 Очистить</button>
+        </div>
+        <div id="resultArea"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Journal Modal -->
+  <div id="journalModal" class="modal hidden" aria-hidden="true">
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel">
+      <div class="modal__header">
+        <h3>Журнал рецептов</h3>
+        <button class="btn small" id="journalClose">✕</button>
+      </div>
+      <div class="modal__tools">
+        <input id="jl-search" type="text" placeholder="Поиск: элемент или результат..." />
+        <label class="chip"><input id="jl-unique" type="checkbox" checked /> Только впервые открытые</label>
+      </div>
+      <div id="jl-list" class="modal__list"></div>
+    </div>
+  </div>
+
+  <script>
+    // ---------------------- DATA ----------------------
+    const ELEMENTS = [
+      { id:'air',    name:'Воздух', emoji:'💨', rarity:'common' },
+      { id:'earth',  name:'Земля',  emoji:'🌱', rarity:'common' },
+      { id:'fire',   name:'Огонь',  emoji:'🔥', rarity:'common' },
+      { id:'water',  name:'Вода',   emoji:'💧', rarity:'common' },
+
+      { id:'steam',  name:'Пар',    emoji:'♨️', rarity:'common' },
+      { id:'lava',   name:'Лава',   emoji:'🌋', rarity:'rare' },
+      { id:'mud',    name:'Грязь',  emoji:'🟫', rarity:'common' },
+      { id:'stone',  name:'Камень', emoji:'🪨', rarity:'common' },
+      { id:'energy', name:'Энергия',emoji:'⚡', rarity:'rare' },
+      { id:'metal',  name:'Металл', emoji:'⚙️', rarity:'rare' }
+    ];
+    const ELEMENTS_BY_ID = Object.fromEntries(ELEMENTS.map(e=>[e.id,e]));
+
+    // Простые логичные рецепты (двойка -> результат)
+    // Массив с неупорядоченными парами (a,b) и result
+    const RECIPES = [
+      { a:'fire', b:'water', result:'steam' },
+      { a:'fire', b:'earth', result:'lava' },
+      { a:'water', b:'earth', result:'mud' },
+      { a:'earth', b:'air', result:'stone' },
+      { a:'fire', b:'air', result:'energy' },
+      { a:'stone', b:'fire', result:'metal' }
+    ];
+
+    // ---------------------- STATE ----------------------
+    const state = {
+      discovered:new Set(),
+      stars: 20,
+      bowlA:null,
+      bowlB:null,
+      soundOn:false
+    };
+    // load from localStorage
+    try {
+      const saved = JSON.parse(localStorage.getItem('elementix_state')||'{}');
+      if (saved.discovered) state.discovered = new Set(saved.discovered);
+      if (typeof saved.stars==='number') state.stars = saved.stars;
+      if ('soundOn' in saved) state.soundOn = !!saved.soundOn;
+    } catch(e){}
+
+    // Initial discovered: 4 базовых
+    ['air','earth','fire','water'].forEach(id=>state.discovered.add(id));
+
+    function persist(){
+      localStorage.setItem('elementix_state', JSON.stringify({
+        discovered:[...state.discovered],
+        stars: state.stars,
+        soundOn: state.soundOn
+      }));
+    }
+
+    // Hint cooldown — 12 часов (по запросу оставить 12h)
+    const HINT_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+    let craftLog = [];
+    try { craftLog = JSON.parse(localStorage.getItem('craftLog')||'[]'); } catch(_){}
+    function saveCraftLog(){ localStorage.setItem('craftLog', JSON.stringify(craftLog)); }
+
+    // ---------------------- UI REFS ----------------------
+    const cardsEl = document.getElementById('cards');
+    const bowlA = document.getElementById('bowlA');
+    const bowlB = document.getElementById('bowlB');
+    const mixBtn = document.getElementById('mixBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const buyHintBtn = document.getElementById('buyHintBtn');
+    const hintSub = document.getElementById('hintSub');
+    const hintNote = document.getElementById('hintNote');
+    const toastEl = document.getElementById('toast');
+    const starsEl = document.getElementById('stars');
+    const soundBtn = document.getElementById('soundBtn');
+    const discCountEl = document.getElementById('discCount');
+
+    // ---------------------- UTIL ----------------------
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(()=>toastEl.classList.remove('show'), 1500);
+    }
+    function fmtHMS(ms){
+      const s = Math.max(0, Math.floor(ms/1000));
+      const h = Math.floor(s/3600);
+      const m = Math.floor((s%3600)/60);
+      const ss = s%60;
+      const pad=n=>String(n).padStart(2,'0');
+      return `${pad(h)}:${pad(m)}:${pad(ss)}`;
+    }
+    function playClick(){ if (!state.soundOn) return; new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAAAAACAgICAgA==').play().catch(()=>{}); }
+
+    // Confetti (very lightweight)
+    (function(){
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      let W=canvas.width=window.innerWidth, H=canvas.height=window.innerHeight;
+      window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;});
+      let parts=[]; let running=false;
+      function spawn(n,x,y){
+        for(let i=0;i<n;i++){
+          parts.push({
+            x:x+(Math.random()*40-20), y:y+(Math.random()*40-20),
+            vx:(Math.random()*2-1)*3, vy:Math.random()*-5-2,
+            g:0.12+Math.random()*0.08, r:2+Math.random()*3, life: 60+Math.random()*40
+          });
+        }
+        if(!running){ running=true; requestAnimationFrame(loop); }
+      }
+      function loop(){
+        ctx.clearRect(0,0,W,H);
+        parts.forEach(p=>{
+          p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.life--;
+          ctx.globalAlpha = Math.max(0,p.life/100);
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle='#'+(~~(Math.random()*0xffffff)).toString(16).padStart(6,'0'); ctx.fill();
+        });
+        parts = parts.filter(p=>p.life>0 && p.y < H+20);
+        if(parts.length>0) requestAnimationFrame(loop); else { running=false; ctx.clearRect(0,0,W,H); }
+      }
+      window.__confetti = (x,y)=>spawn(120, x||W/2, y||H*0.35);
+    })();
+
+    // ---------------------- RENDER ----------------------
+    function cardHTML(e){
+      return `<div class="card" data-id="${e.id}" title="${e.name}" draggable="true">
+        <span class="rarity">${e.rarity==='rare'?'Редкий':e.rarity==='epic'?'Эпический':'Обычный'}</span>
+        <div class="cardInner"><span class="emoji">${e.emoji}</span><span class="name">${e.name}</span></div>
+      </div>`;
+    }
+
+    function renderCards(){
+      const items = ELEMENTS.filter(e=>state.discovered.has(e.id));
+      cardsEl.innerHTML = items.map(cardHTML).join('');
+      document.querySelectorAll('.card').forEach(c=>{
+        c.addEventListener('click', ()=>{
+          const targetBowl = (!state.bowlA ? bowlA : bowlB);
+          animateFlyCard(c, targetBowl);
+          pickToBowl(c.dataset.id);
+          playClick();
+        });
+        c.addEventListener('dragstart', (ev)=>{
+          ev.dataTransfer.setData('text/element-id', c.dataset.id);
+          window.__dragSourceEl = c;
+        });
+      });
+      discCountEl.textContent = state.discovered.size;
+    }
+
+    function renderBowls(){
+      const A = state.bowlA ? ELEMENTS_BY_ID[state.bowlA] : null;
+      const B = state.bowlB ? ELEMENTS_BY_ID[state.bowlB] : null;
+      bowlA.innerHTML = A ? `<div class="chip">${A.emoji} ${A.name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+      bowlB.innerHTML = B ? `<div class="chip">${B.emoji} ${B.name}</div>` : `<span class="placeholder">Перетащи или кликни элемент</span>`;
+    }
+
+    function updateStars(){ starsEl.textContent = state.stars; persist(); }
+    function updateSoundBtn(){ soundBtn.textContent = state.soundOn ? '🔊 Звук вкл' : '🔇 Звук выкл'; persist(); }
+
+    // ---------------------- HINTS ----------------------
+    function getFreeAt(){
+      const v = localStorage.getItem('hintFreeAt');
+      return v ? +v : 0;
+    }
+    function setFreeAt(ts){
+      localStorage.setItem('hintFreeAt', String(ts));
+    }
+    function updateHintState(){
+      const left = getFreeAt() - Date.now();
+      if (left>0){
+        hintSub.textContent = `через ${fmtHMS(left)}`;
+        hintNote.textContent = `Бесплатная подсказка будет через ${fmtHMS(left)}. Можно купить платную за ⭐10.`;
+      }else{
+        hintSub.textContent = '(бесплатно)';
+        hintNote.textContent = 'Бесплатная подсказка доступна раз в 12 часов.';
+      }
+    }
+    function clearHintGlow(){
+      document.querySelectorAll('.card.hint-glow').forEach(n=>n.classList.remove('hint-glow'));
+    }
+    function makeHint(){
+      clearHintGlow();
+      // Ищем рецепт, где результат ещё не открыт, но оба ингредиента уже есть
+      const candidates = RECIPES.filter(r=>!state.discovered.has(r.result) && state.discovered.has(r.a) && state.discovered.has(r.b));
+      if (candidates.length===0){
+        toast('Пока нечего подсказать — попробуй другие сочетания!');
+        return;
+      }
+      const pick = candidates[Math.floor(Math.random()*candidates.length)];
+      // Подсветим нужные карточки, без автозаполнения
+      const ids = new Set([pick.a, pick.b]);
+      document.querySelectorAll('.card').forEach(c=>{
+        if (ids.has(c.dataset.id)) c.classList.add('hint-glow');
+      });
+      toast('Подсказка: подсветили 2 элемента. Попробуй их смешать!');
+    }
+
+    hintBtn.addEventListener('click', ()=>{
+      const left = getFreeAt() - Date.now();
+      if (left>0){
+        toast('Бесплатная подсказка пока недоступна');
+        return;
+      }
+      setFreeAt(Date.now()+HINT_COOLDOWN_MS);
+      updateHintState();
+      makeHint();
+    });
+
+    buyHintBtn.addEventListener('click', ()=>{
+      if (state.stars < 10){ toast('Недостаточно ⭐ для подсказки'); return; }
+      state.stars -= 10; updateStars();
+      makeHint();
+    });
+
+    // ---------------------- DRAG & DROP ----------------------
+    ;[bowlA, bowlB].forEach((bowl, idx)=>{
+      bowl.addEventListener('dragover', ev=>ev.preventDefault());
+      bowl.addEventListener('drop', ev=>{
+        ev.preventDefault();
+        const id = ev.dataTransfer.getData('text/element-id');
+        if (!id) return;
+        if (window.__dragSourceEl) animateFlyCard(window.__dragSourceEl, bowl);
+        if (idx===0) state.bowlA = id; else state.bowlB = id;
+        renderBowls();
+      });
+    });
+
+    function pickToBowl(id){
+      if (!state.bowlA) state.bowlA = id;
+      else state.bowlB = id;
+      renderBowls();
+    }
+
+    // ---------------------- MIXING ----------------------
+    function keyFor(a,b){
+      return a<b ? a+'|'+b : b+'|'+a;
+    }
+    const RECIPE_MAP = new Map();
+    RECIPES.forEach(r=>RECIPE_MAP.set(keyFor(r.a,r.b), r.result));
+
+    function doMix(){
+      clearHintGlow();
+      const a = state.bowlA, b = state.bowlB;
+      if (!a || !b){ toast('Нужно 2 элемента'); return; }
+      const result = RECIPE_MAP.get(keyFor(a,b));
+      const rect = bowlA.getBoundingClientRect();
+      __confetti(rect.left + rect.width/2, rect.top); // маленькое веселье всегда
+
+      if (!result){
+        toast('Ничего не получилось. Попробуй другое сочетание.');
+        craftLog.unshift({ t:Date.now(), a, b, result:null });
+        if (craftLog.length>500) craftLog.pop();
+        saveCraftLog();
+        return;
+      }
+
+      // Добавим в открытые
+      const wasNew = !state.discovered.has(result);
+      state.discovered.add(result); persist();
+      renderCards();
+      craftLog.unshift({ t:Date.now(), a, b, result });
+      if (craftLog.length>500) craftLog.pop();
+      saveCraftLog();
+
+      const R = ELEMENTS_BY_ID[result];
+      toast(`${R.emoji} Получился элемент: ${R.name}!`);
+      if (wasNew){
+        const rectB = bowlB.getBoundingClientRect();
+        __confetti((rect.left+rectB.right)/2, rect.top-20);
+      }
+      // автоочистка чаш
+      state.bowlA = state.bowlB = null; renderBowls();
+      updateStars(); // persist
+    }
+
+    mixBtn.addEventListener('click', doMix);
+    clearBtn.addEventListener('click', ()=>{ state.bowlA = state.bowlB = null; renderBowls(); });
+
+    // ---------------------- FLY ANIMATION ----------------------
+    function animateFlyCard(sourceEl, targetEl) {
+      if (!sourceEl || !targetEl) return;
+      const s = sourceEl.getBoundingClientRect();
+      const t = targetEl.getBoundingClientRect();
+
+      const ghost = sourceEl.cloneNode(true);
+      ghost.classList.add('fly-ghost');
+      ghost.style.left = s.left + 'px';
+      ghost.style.top = s.top + 'px';
+      ghost.style.width = s.width + 'px';
+      ghost.style.height = s.height + 'px';
+      ghost.style.transform = 'translate3d(0,0,0)';
+      ghost.style.opacity = '1';
+      document.body.appendChild(ghost);
+
+      const dx = (t.left + t.width / 2) - (s.left + s.width / 2);
+      const dy = (t.top + t.height / 2) - (s.top + s.height / 2);
+
+      requestAnimationFrame(() => {
+        ghost.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(.4)`;
+        ghost.style.opacity = '0.16';
+      });
+      setTimeout(() => ghost.remove(), 520);
+    }
+
+    // ---------------------- JOURNAL ----------------------
+    function getElementByIdSafe(id){
+      return ELEMENTS_BY_ID[id] || {id, name:'#'+id, emoji:'❓'};
+    }
+    function fmtDate(ts){ return new Date(ts).toLocaleString(undefined, {hour12:false}); }
+    const journalModal = document.getElementById('journalModal');
+    const journalClose = document.getElementById('journalClose');
+    const jlSearch = document.getElementById('jl-search');
+    const jlUnique = document.getElementById('jl-unique');
+    const jlList = document.getElementById('jl-list');
+    document.getElementById('journalBtn').addEventListener('click', openJournal);
+    journalClose.addEventListener('click', closeJournal);
+    journalModal.querySelector('.modal__backdrop').addEventListener('click', closeJournal);
+
+    function openJournal(){
+      journalModal.classList.remove('hidden'); journalModal.setAttribute('aria-hidden','false');
+      renderJournal();
+      jlSearch.oninput = renderJournal;
+      jlUnique.onchange = renderJournal;
+    }
+    function closeJournal(){
+      journalModal.classList.add('hidden'); journalModal.setAttribute('aria-hidden','true');
+    }
+    function renderJournal(){
+      const q = (jlSearch.value||'').trim().toLowerCase();
+      const onlyUnique = jlUnique.checked;
+      const seen = new Set();
+      const rows = [];
+
+      for (const item of craftLog){
+        const A = item.a && getElementByIdSafe(item.a);
+        const B = item.b && getElementByIdSafe(item.b);
+        const R = item.result && getElementByIdSafe(item.result);
+
+        if (onlyUnique){
+          const key = item.result || ('fail:'+item.a+'|'+item.b);
+          if (seen.has(key)) continue;
+          seen.add(key);
+        }
+
+        const hay = ((A?.name||'')+' '+(B?.name||'')+' '+(R?.name||'')).toLowerCase();
+        if (q && !hay.includes(q)) continue;
+
+        rows.push(`
+          <div class="jl-item">
+            <div class="jl-row jl-dot">${fmtDate(item.t)}</div>
+            <div class="jl-row">
+              <span class="chip">${A?.emoji||''} ${A?.name||'?'}</span>
+              <span>＋</span>
+              <span class="chip">${B?.emoji||''} ${B?.name||'?'}</span>
+              <span>⟶</span>
+              ${R ? `<span class="chip"><strong>${R.emoji} ${R.name}</strong></span>`
+                  : `<span class="chip" style="opacity:.7">неудача</span>`}
+            </div>
+          </div>
+        `);
+      }
+      jlList.innerHTML = rows.length ? rows.join('') : '<div class="jl-item">Пока пусто.</div>';
+    }
+
+    // ---------------------- INIT ----------------------
+    function init(){
+      // restore hint cooldown label
+      updateHintState();
+      // timer updater each second
+      setInterval(updateHintState, 1000);
+      updateStars();
+      updateSoundBtn();
+      renderCards();
+      renderBowls();
+    }
+    init();
+
+    // ---------------------- SOUND ----------------------
+    soundBtn.addEventListener('click', ()=>{
+      state.soundOn = !state.soundOn;
+      updateSoundBtn();
+      if (state.soundOn) playClick();
+    });
+  </script>
+</body>
+</html>
