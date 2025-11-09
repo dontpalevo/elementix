@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Elementix — Mini Alchemy (v1.6)</title>
+  <meta name="theme-color" content="#0b0e14">
+  <link rel="preconnect" href="https://telegram.org">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#0b0e14;--panel:#0f1420;--card:#0e121b;--text:#e6e9f2;--muted:#9aa3b2;
+      --border:#223047;--accent:#7cc4ff;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;
+      --chip:#0f172a;--glass:rgba(255,255,255,.05);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 800px at 10% -10%, #10233b 0%, transparent 60%),
+        radial-gradient(800px 600px at 110% 30%, #1a2c44 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg), #0d1117 120%);
+      color:var(--text);
+      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    /* Layout */
+    .wrap{max-width:760px;margin:0 auto;padding:14px calc(14px + env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));display:grid;gap:14px}
+    header{
+      position:sticky;top:0;z-index:50;backdrop-filter:saturate(120%) blur(8px);
+      background:linear-gradient(180deg, rgba(2,6,23,.6), rgba(2,6,23,0));
+      border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:conic-gradient(from 180deg at 60% 40%,#78d5ff, #7dffb6, #bda6ff, #78d5ff);filter:saturate(120%);position:relative}
+    .logo:after{content:"";position:absolute;inset:0;border-radius:12px;border:1px solid rgba(255,255,255,.15);box-shadow:inset 0 0 20px rgba(0,0,0,.25)}
+    .title{font-weight:900;letter-spacing:.3px}
+    .sub{opacity:.75;font-size:12px}
+    .pill{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.04)}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.24)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
+    @media (min-width:560px){ .grid{grid-template-columns:repeat(3,1fr)} }
+    @media (min-width:840px){ .grid{grid-template-columns:repeat(4,1fr)} }
+    /* Controls */
+    .btn{appearance:none;border:none;cursor:pointer;
+      padding:12px 14px;border-radius:12px;min-height:44px;
+      background:linear-gradient(180deg,#111827,#0d1522);color:var(--text);
+      border:1px solid var(--border);transition:transform .08s ease, background .2s, opacity .2s;user-select:none}
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{background:transparent}
+    .btn.success{background:linear-gradient(180deg,#22c55e,#16a34a)}
+    input[type="search"]{
+      flex:1;min-width:180px;padding:12px 12px;border-radius:10px;
+      border:1px solid var(--border);background:#0b0f18;color:var(--text)
+    }
+    /* Cards */
+    .card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;cursor:pointer;position:relative;
+      background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
+      border:1px solid var(--border);min-height:56px;overflow:hidden}
+    .card:hover{outline:1px solid rgba(124,196,255,.25)}
+    .card:active{transform:translateY(1px)}
+    .emoji{font-size:22px;flex:0 0 auto}
+    .name{font-weight:800;letter-spacing:.2px}
+    .rar{position:absolute;right:8px;top:8px;font-size:10px;opacity:.7;border:1px solid var(--border);padding:2px 6px;border-radius:999px}
+    /* Bowls */
+    .bowls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .bowl{min-height:90px;border:1px dashed #2a3a56;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:12px;background:#0f1320;color:#9fb3c8;position:relative}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);font-weight:700}
+    .empty{padding:18px;border:1px dashed var(--border);border-radius:12px;text-align:center;color:var(--muted)}
+    .toast{position:fixed;left:50%;top:10px;transform:translateX(-50%);background:#0f1420;border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:none;z-index:200}
+    .toast.show{display:block}
+    /* Animations */
+    .fade-in{animation:fade .2s ease}
+    @keyframes fade { from{opacity:.4; transform:translateY(2px)} to{opacity:1; transform:none} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hrow">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="title">Elementix</div>
+          <div class="sub" id="tgUser">Игрок: ...</div>
+        </div>
+      </div>
+      <div class="pill">⭐ <b id="stars">0</b></div>
+    </div>
+  </header>
+
+  <main class="wrap" id="root">
+
+    <section class="panel">
+      <div class="row" style="justify-content:space-between;gap:8px">
+        <div class="row">
+          <button class="btn ghost" id="btnShare">Поделиться</button>
+          <button class="btn ghost" id="btnReset">Сброс</button>
+        </div>
+        <small id="themeDbg" class="sub"></small>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="bowls">
+        <div class="bowl" id="bowlA"><span class="sub">Выбери элемент…</span></div>
+        <div class="bowl" id="bowlB"><span class="sub">…и второй</span></div>
+      </div>
+      <div class="row" style="margin-top:10px;gap:10px">
+        <button class="btn success" id="btnMix">🥣 Смешать</button>
+        <button class="btn" id="btnClear">🧹 Очистить</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="row" style="justify-content:space-between;gap:10px">
+        <div class="pill">Открыто: <b id="discCount">0</b></div>
+        <input id="search" type="search" placeholder="Поиск">
+      </div>
+      <div class="grid" id="cards" style="margin-top:10px"></div>
+      <div id="emptyState" class="empty" style="display:none">Ничего не найдено</div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+/* ---------- Telegram WebApp & Theme ---------- */
+const tg = window.Telegram?.WebApp;
+if (tg){
+  tg.ready(); tg.expand();
+  applyTheme(tg.themeParams);
+  tg.onEvent('themeChanged', ()=> applyTheme(tg.themeParams));
+}
+function applyTheme(p){
+  if(!p) return; const css = document.documentElement.style;
+  if (p.bg_color) css.setProperty('--bg', p.bg_color);
+  if (p.secondary_bg_color) css.setProperty('--panel', p.secondary_bg_color);
+  if (p.text_color) css.setProperty('--text', p.text_color);
+  if (p.hint_color) css.setProperty('--muted', p.hint_color);
+  if (p.link_color) css.setProperty('--accent', p.link_color);
+  if (p.button_color) css.setProperty('--border', p.button_color + '40');
+  document.getElementById('themeDbg').textContent = tg?.colorScheme ? ('theme: ' + tg.colorScheme) : '';
+}
+
+/* ---------- Mini-game data ---------- */
+const ELEMENTS=[
+  {id:'air',name:'Воздух',emoji:'💨',rar:'Common'},
+  {id:'earth',name:'Земля',emoji:'🌱',rar:'Common'},
+  {id:'fire',name:'Огонь',emoji:'🔥',rar:'Common'},
+  {id:'water',name:'Вода',emoji:'💧',rar:'Common'},
+  {id:'steam',name:'Пар',emoji:'♨️',rar:'Common'},
+  {id:'stone',name:'Камень',emoji:'🪨',rar:'Common'}
+];
+const RECIPES=new Map([
+  ['fire|water','steam'],
+  ['air|earth','stone']
+]);
+
+/* ---------- State ---------- */
+const state={
+  discovered:new Set(['air','earth','fire','water']),
+  bowlA:null,bowlB:null,stars:0,user:'Гость'
+};
+
+(function initIdentity(){
+  const u=tg?.initDataUnsafe?.user;
+  state.user = u?.username || u?.first_name || 'Гость';
+  document.getElementById('tgUser').textContent = 'Игрок: ' + state.user;
+})();
+
+/* ---------- DOM refs ---------- */
+const cardsEl=document.getElementById('cards');
+const bowlA=document.getElementById('bowlA');
+const bowlB=document.getElementById('bowlB');
+const discCount=document.getElementById('discCount');
+const starsEl=document.getElementById('stars');
+const searchEl=document.getElementById('search');
+const toastEl=document.getElementById('toast');
+const emptyState=document.getElementById('emptyState');
+
+/* ---------- UI helpers ---------- */
+function toast(m){ toastEl.textContent=m; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),1400); tg?.HapticFeedback?.notificationOccurred('success'); }
+function chipHTML(id){ const e=ELEMENTS.find(x=>x.id===id); return e?`<span class="chip"><span style="font-size:18px">${e.emoji}</span><b>${e.name}</b></span>`:''; }
+function pickToBowl(id){ if (!state.bowlA) state.bowlA=id; else state.bowlB=id; render(); tg?.HapticFeedback?.impactOccurred('light'); }
+function selectNone(){ state.bowlA=state.bowlB=null; render(); }
+function k(a,b){ return a<b?`${a}|${b}`:`${b}|${a}` }
+function emojiName(id){ const e=ELEMENTS.find(x=>x.id===id); return e?`${e.emoji} ${e.name}`:id }
+
+/* ---------- Render ---------- */
+function render(){
+  const q=(searchEl.value||'').toLowerCase();
+  const items=ELEMENTS.filter(e=>state.discovered.has(e.id) && (!q || e.name.toLowerCase().includes(q)));
+  cardsEl.innerHTML=items.map(e=>`<div class="card fade-in" data-id="${e.id}"><span class="emoji">${e.emoji}</span><span class="name">${e.name}</span><span class="rar">${e.rar}</span></div>`).join('');
+  document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=> pickToBowl(c.dataset.id)));
+  bowlA.innerHTML = state.bowlA ? chipHTML(state.bowlA) : '<span class="sub">Выбери элемент…</span>';
+  bowlB.innerHTML = state.bowlB ? chipHTML(state.bowlB) : '<span class="sub">…и второй</span>';
+  discCount.textContent = state.discovered.size;
+  starsEl.textContent = state.stars;
+  emptyState.style.display = items.length? 'none':'block';
+}
+
+/* ---------- Actions ---------- */
+function doMix(){
+  const a=state.bowlA,b=state.bowlB; if(!a||!b){ toast('Нужно 2 элемента'); return; }
+  const result=RECIPES.get(k(a,b));
+  if(!result){ toast('Не вышло'); selectNone(); return; }
+  const wasNew=!state.discovered.has(result);
+  state.discovered.add(result); selectNone();
+  if (wasNew){ state.stars+=2; toast('Новый элемент! +' + 2 + ' ⭐'); }
+  render();
+  saveProgressDebounced();
+}
+
+btnMix.onclick=doMix;
+btnClear.onclick=selectNone;
+btnReset.onclick=()=>{
+  if(confirm('Сбросить прогресс?')){
+    state.discovered=new Set(['air','earth','fire','water']); state.stars=0; selectNone();
+    toast('Сброшено');
+    saveProgressDebounced();
+  }
+};
+btnShare.onclick=()=>{
+  const url=(location.origin+location.pathname).replace(/#.*$/,'');
+  const text=encodeURIComponent('Открыл новый элемент в Elementix!');
+  const share=`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${text}`;
+  if (tg) tg.openTelegramLink(share); else window.open(share,'_blank');
+};
+searchEl.oninput=render;
+
+/* ---------- Persistence (LocalStorage + optional server) ---------- */
+const LS_KEY='elementix_v16_progress';
+function loadLocal(){ try{ const j=JSON.parse(localStorage.getItem(LS_KEY)); if(j){ state.discovered=new Set(j.discovered||['air','earth','fire','water']); state.stars=j.stars||0; } }catch{} }
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({discovered:[...state.discovered],stars:state.stars})); }catch{} }
+
+async function tryServerLoad(){
+  if (!tg?.initData) return null;
+  try{
+    const r=await fetch('/api/load',{headers:{'X-Telegram-Init-Data':tg.initData}});
+    if(!r.ok) return null;
+    const json=await r.json();
+    if(json?.ok && json.data){
+      const d=json.data;
+      if (Array.isArray(d.discovered)) state.discovered=new Set(d.discovered);
+      if (typeof d.stars==='number') state.stars=d.stars;
+      return true;
+    }
+  }catch(e){ /* likely no API on static hosting */ }
+  return null;
+}
+async function tryServerSave(){
+  if (!tg?.initData) return null;
+  try{
+    const r=await fetch('/api/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Telegram-Init-Data':tg.initData},
+      body:JSON.stringify({discovered:[...state.discovered],stars:state.stars})
+    });
+    return r.ok;
+  }catch(e){ return null; }
+}
+const saveProgressDebounced = debounce(()=>{ saveLocal(); tryServerSave(); }, 250);
+
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); } }
+
+/* ---------- Init ---------- */
+(async function init(){
+  loadLocal();
+  await tryServerLoad(); // if API available (when opened via your Node server) — it will override local
+  render();
+})();
+</script>
+</body>
+</html>
